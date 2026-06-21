@@ -2844,9 +2844,31 @@ function resultCard(c){
     const targetRow=targets.map(t=>_sc(t.score.toFixed(3),'var(--text3)',11,false)).join('');
     const resRow=actuals.map((rv,i)=>_sc(rv.score.toFixed(3),rv.score-targets[i].score>=0?'#22c55e':'#f87171',12)).join('');
     const diffRow=actuals.map((rv,i)=>{const d=rv.score-targets[i].score;return _sc((d>=0?'+':'')+d.toFixed(3),d>=0?'#22c55e':'#f87171',10,false);}).join('');
+    // モバイル縦テーブル行（実得点あり → 種目 | 目標 | 実得点+差分）
+    const vertResRows=apps.map((a,i)=>{
+      const t=targets[i]; const rv=actuals[i];
+      const color=APP_COLORS[a]||'#6366f1';
+      const diff=rv.score-t.score; const dc=diff>=0?'#22c55e':'#f87171';
+      const sub=`<span style="font-size:10px;color:var(--text3);display:block;margin-top:1px;">D${t.dScore.toFixed(1)} E${t.eScore.toFixed(1)}${t.sb>0?' SB+'+t.sb.toFixed(1):''}</span>`;
+      return `<tr style="border-bottom:1px solid var(--border)22;">
+        <td style="padding:6px 8px;border-right:1px solid var(--border);">
+          <span style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-size:12px;font-weight:700;color:${color};">${COP[a].name}</span>
+          </span>
+          ${sub}
+        </td>
+        <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:600;color:var(--text3);border-right:1px solid var(--border);">${t.score.toFixed(3)}</td>
+        <td style="padding:6px 10px;text-align:right;">
+          <span style="font-size:15px;font-weight:800;color:${dc};">${rv.score.toFixed(3)}</span><br>
+          <span style="font-size:10px;color:${dc};">${(diff>=0?'+':'')+diff.toFixed(3)}</span>
+        </td>
+      </tr>`;
+    }).join('');
     bodyHtml=`
       ${res.note?`<div style="font-size:12px;color:var(--text2);font-style:italic;margin-bottom:10px;">📝 ${res.note}</div>`:''}
-      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+      <!-- PC横テーブル -->
+      <div class="score-horiz" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
       <table style="width:100%;border-collapse:collapse;min-width:400px;">
         <thead><tr>
           <th style="padding:0;border-right:1px solid var(--border);">
@@ -2868,6 +2890,29 @@ function resultCard(c){
             ${_lc('目標','var(--text3)')}${targetRow}${_tc(totalTarget.toFixed(3),'var(--text3)',11)}
           </tr>
         </tbody>
+      </table>
+      </div>
+      <!-- モバイル縦テーブル（種目 | 目標 | 実得点+差分） -->
+      <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--surface2);">
+            <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
+            <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);">目標</th>
+            <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;">🏆 実得点</th>
+          </tr>
+        </thead>
+        <tbody>${vertResRows}</tbody>
+        <tfoot>
+          <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
+            <td style="padding:8px 8px;font-size:12px;font-weight:700;color:#818cf8;border-right:1px solid var(--border);">合計</td>
+            <td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
+            <td style="padding:8px 10px;text-align:right;">
+              <span style="font-size:17px;font-weight:800;color:${totalDiff>=0?'#22c55e':'#f87171'};">${totalResult.toFixed(3)}</span><br>
+              <span style="font-size:11px;color:${totalDiff>=0?'#22c55e':'#f87171'};">${(totalDiff>=0?'+':'')+totalDiff.toFixed(3)}</span>
+            </td>
+          </tr>
+        </tfoot>
       </table>
       </div>`;
   } else if(r){
@@ -2986,18 +3031,18 @@ function planCard(c,todayStr){
     const dRow=scores.map(s=>_sc(s.dScore.toFixed(1),'#818cf8',10,false)).join('');
     const eRow=scores.map(s=>_sc(s.eScore.toFixed(3),'var(--text2)',10,false)).join('');
     const sbRow=scores.map(s=>_sc(s.sb>0?'+'+s.sb.toFixed(1):'—','#34d399',10,false)).join('');
-    // モバイル縦テーブル用行
+    // モバイル縦テーブル用行（2列：種目+内訳サブ / 目標得点）
     const _vertRows=scores.map(s=>{
       const color=APP_COLORS[s.app]||'#6366f1';
       return `<tr style="border-bottom:1px solid var(--border)22;">
-        <td style="padding:5px 8px;border-right:1px solid var(--border);">
-          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:4px;"></span>
-          <span style="font-size:12px;font-weight:700;color:${color};">${COP[s.app].name}</span>
+        <td style="padding:7px 10px;border-right:1px solid var(--border);">
+          <span style="display:inline-flex;align-items:center;gap:5px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-size:13px;font-weight:700;color:${color};">${COP[s.app].name}</span>
+          </span>
+          <span style="font-size:10px;color:var(--text3);display:block;margin-top:1px;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</span>
         </td>
-        <td style="padding:5px 5px;text-align:center;font-size:11px;color:#818cf8;">${s.dScore.toFixed(1)}</td>
-        <td style="padding:5px 5px;text-align:center;font-size:11px;color:var(--text2);">${s.eScore.toFixed(1)}</td>
-        <td style="padding:5px 5px;text-align:center;font-size:11px;color:#34d399;">${s.sb>0?'+'+s.sb.toFixed(1):'—'}</td>
-        <td style="padding:5px 8px;text-align:right;font-size:13px;font-weight:800;color:var(--text1);border-left:1px solid var(--border);">${s.score.toFixed(3)}</td>
+        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);">${s.score.toFixed(3)}</td>
       </tr>`;
     }).join('');
     routineScoreHtml=`
@@ -3045,23 +3090,20 @@ function planCard(c,todayStr){
         </tbody>
       </table>
       </div>
-      <!-- モバイル縦テーブル -->
+      <!-- モバイル縦テーブル（2列シンプル） -->
       <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
       <table style="width:100%;border-collapse:collapse;">
         <thead>
           <tr style="background:var(--surface2);">
-            <th style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
-            <th style="padding:4px 5px;font-size:10px;color:#818cf8;text-align:center;">D</th>
-            <th style="padding:4px 5px;font-size:10px;color:var(--text2);text-align:center;">E</th>
-            <th style="padding:4px 5px;font-size:10px;color:#34d399;text-align:center;">SB</th>
-            <th style="padding:4px 8px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;border-left:1px solid var(--border);">目標</th>
+            <th style="padding:5px 10px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
+            <th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;">目標得点</th>
           </tr>
         </thead>
         <tbody>${_vertRows}</tbody>
         <tfoot>
           <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
-            <td colspan="4" style="padding:6px 8px;font-size:12px;font-weight:700;color:#818cf8;">合計</td>
-            <td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:800;color:#818cf8;border-left:1px solid var(--border);">${totalScore.toFixed(3)}</td>
+            <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#818cf8;border-right:1px solid var(--border);">合計</td>
+            <td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;">${totalScore.toFixed(3)}</td>
           </tr>
         </tfoot>
       </table>
@@ -3401,24 +3443,46 @@ function renderTotalTable(r){
   }
 
   // ── 縦テーブル（モバイル用）──
+  // 結果なし：種目＋内訳小文字 / 目標得点（広め）の2列
+  // 結果あり：種目 / 目標 / 実得点+差分 の3列
   const vertRows=apps.map((a,i)=>{
     const t=targets[i];
     const rv=results?results[i]:null;
     const color=APP_COLORS[a]||'#6366f1';
-    const diff=rv?(rv.score-t.score):null;
-    return `<tr style="border-bottom:1px solid var(--border)22;">
-      <td style="padding:6px 8px;border-right:1px solid var(--border);">
-        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:5px;"></span>
-        <span style="font-size:12px;font-weight:700;color:${color};">${COP[a].name}</span>
-      </td>
-      <td style="padding:6px 6px;text-align:center;font-size:11px;color:#818cf8;">${t.dScore.toFixed(1)}</td>
-      <td style="padding:6px 6px;text-align:center;font-size:11px;color:var(--text2);">${t.eScore.toFixed(1)}</td>
-      <td style="padding:6px 6px;text-align:center;font-size:11px;color:#34d399;">${t.sb>0?'+'+t.sb.toFixed(1):'—'}</td>
-      <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:800;color:var(--text1);border-left:1px solid var(--border);">${t.score.toFixed(3)}</td>
-      ${rv!=null?`<td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:800;color:${diff>=0?'#22c55e':'#f87171'};border-left:1px solid var(--border);">${rv.score.toFixed(3)}<br><span style="font-size:10px;font-weight:400;">${(diff>=0?'+':'')+diff.toFixed(3)}</span></td>`:''}
-    </tr>`;
+    const sub=`<span style="font-size:10px;color:var(--text3);display:block;margin-top:1px;">D${t.dScore.toFixed(1)} E${t.eScore.toFixed(1)}${t.sb>0?' SB+'+t.sb.toFixed(1):''}</span>`;
+    if(!rv){
+      // 結果なし：2列
+      return `<tr style="border-bottom:1px solid var(--border)22;">
+        <td style="padding:7px 10px;border-right:1px solid var(--border);">
+          <span style="display:inline-flex;align-items:center;gap:5px;">
+            <span style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-size:13px;font-weight:700;color:${color};">${COP[a].name}</span>
+          </span>
+          ${sub}
+        </td>
+        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);">${t.score.toFixed(3)}</td>
+      </tr>`;
+    } else {
+      // 結果あり：3列
+      const diff=rv.score-t.score;
+      const dc=diff>=0?'#22c55e':'#f87171';
+      return `<tr style="border-bottom:1px solid var(--border)22;">
+        <td style="padding:6px 8px;border-right:1px solid var(--border);">
+          <span style="display:inline-flex;align-items:center;gap:4px;">
+            <span style="width:7px;height:7px;border-radius:50%;background:${color};flex-shrink:0;display:inline-block;"></span>
+            <span style="font-size:12px;font-weight:700;color:${color};">${COP[a].name}</span>
+          </span>
+          ${sub}
+        </td>
+        <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:600;color:var(--text3);border-right:1px solid var(--border);">${t.score.toFixed(3)}</td>
+        <td style="padding:6px 10px;text-align:right;">
+          <span style="font-size:15px;font-weight:800;color:${dc};">${rv.score.toFixed(3)}</span><br>
+          <span style="font-size:10px;color:${dc};">${(diff>=0?'+':'')+diff.toFixed(3)}</span>
+        </td>
+      </tr>`;
+    }
   }).join('');
-  const vertResultHeader=results?`<th style="padding:4px 8px;text-align:right;font-size:10px;color:#f87171;border-left:1px solid var(--border);">🏆実得点</th>`:'';
+  const vertTotalDiff=results?(totalResult-totalTarget):null;
 
   document.getElementById('routine-total-section').innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
@@ -3471,20 +3535,26 @@ function renderTotalTable(r){
     <table style="width:100%;border-collapse:collapse;">
       <thead>
         <tr style="background:var(--surface2);">
-          <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
-          <th style="padding:5px 6px;font-size:10px;color:#818cf8;text-align:center;">D</th>
-          <th style="padding:5px 6px;font-size:10px;color:var(--text2);text-align:center;">E</th>
-          <th style="padding:5px 6px;font-size:10px;color:#34d399;text-align:center;">SB</th>
-          <th style="padding:5px 8px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;border-left:1px solid var(--border);">目標</th>
-          ${vertResultHeader}
+          <th style="padding:5px 10px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
+          ${results
+            ? `<th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);">目標</th>
+               <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;">🏆 実得点</th>`
+            : `<th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;">目標得点</th>`
+          }
         </tr>
       </thead>
       <tbody>${vertRows}</tbody>
       <tfoot>
         <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
-          <td colspan="4" style="padding:7px 8px;font-size:12px;font-weight:700;color:#818cf8;">合計</td>
-          <td style="padding:7px 8px;text-align:right;font-size:15px;font-weight:800;color:#818cf8;border-left:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
-          ${results?`<td style="padding:7px 8px;text-align:right;font-size:15px;font-weight:800;color:${(totalResult-totalTarget)>=0?'#22c55e':'#f87171'};border-left:1px solid var(--border);">${totalResult.toFixed(3)}</td>`:''}
+          <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#818cf8;border-right:${results?'1px solid var(--border)':'none'};">合計</td>
+          ${results
+            ? `<td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
+               <td style="padding:8px 10px;text-align:right;">
+                 <span style="font-size:17px;font-weight:800;color:${vertTotalDiff>=0?'#22c55e':'#f87171'};">${totalResult.toFixed(3)}</span><br>
+                 <span style="font-size:11px;color:${vertTotalDiff>=0?'#22c55e':'#f87171'};">${(vertTotalDiff>=0?'+':'')+vertTotalDiff.toFixed(3)}</span>
+               </td>`
+            : `<td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;">${totalTarget.toFixed(3)}</td>`
+          }
         </tr>
       </tfoot>
     </table>
