@@ -155,10 +155,11 @@ canvas{max-height:240px}
 .routine-elem-table tr.uncounted td{opacity:.45}
 .routine-elem-table td.del-cell{width:24px;text-align:center}
 .dv-A{color:#94a3b8}.dv-B{color:#60a5fa}.dv-C{color:#a78bfa}.dv-D{color:#34d399}.dv-E{color:#fbbf24}.dv-F{color:#f97316}.dv-G{color:#ef4444}.dv-H{color:#ec4899}.dv-I{color:#06b6d4}.dv-J{color:#d946ef}
-.routine-elem-table tr[draggable]{cursor:grab}
+.routine-elem-table tr[draggable]{cursor:grab;touch-action:pan-y;}
 .routine-elem-table tr[draggable]:active{cursor:grabbing}
 .routine-elem-table tr.drag-ghost{opacity:.35;background:var(--surface2);}
 .routine-elem-table tr.drag-target td{border-top:2px solid var(--accent)!important;}
+.routine-elem-table tr.drag-ghost td{background:rgba(99,102,241,.15)!important;}
 .routine-elem-table td.ie-name{cursor:text;}
 .routine-elem-table td.ie-name:hover{background:rgba(99,102,241,.08);}
 .routine-elem-table td.ie-sel{cursor:pointer;}
@@ -227,30 +228,30 @@ canvas{max-height:240px}
 .cal-has-comp{border-color:#ef4444!important;}
 .db-cal-cell:hover{border-color:var(--accent);background:rgba(99,102,241,.06);}
 .db-cal-cell.today{border-color:var(--accent)!important;background:rgba(99,102,241,.1)!important;}
-.db-cal-cell.cal-has-hi{border-color:var(--green);background:rgba(34,197,94,.07);}
-.db-cal-cell.cal-has-mid{border-color:#f59e0b;background:rgba(245,158,11,.07);}
-.db-cal-cell.cal-has-lo{border-color:var(--red);background:rgba(239,68,68,.07);}
+.db-cal-cell.cal-has-hi{border-color:#22c55e;background:rgba(34,197,94,.13);}
+.db-cal-cell.cal-has-mid{border-color:#f59e0b;background:rgba(245,158,11,.13);}
+.db-cal-cell.cal-has-lo{border-color:#ef4444;background:rgba(239,68,68,.13);}
 .db-cal-cell.cal-rest{opacity:.45;cursor:default;}
 .db-cal-cell.cal-empty{opacity:0;pointer-events:none;}
-.db-cal-cell.cal-future{opacity:.55;}
-.db-cal-num{font-size:12px;font-weight:700;color:var(--text3);margin-bottom:2px;}
+.db-cal-cell.cal-future{opacity:.6;}
+.db-cal-num{font-size:12px;font-weight:700;color:var(--text2);margin-bottom:2px;}
 .db-cal-cell.today .db-cal-num{color:var(--accent2);}
-.db-cal-menu{font-size:9px;padding:1px 4px;border-radius:3px;background:rgba(99,102,241,.18);color:var(--accent2);font-weight:700;display:inline-block;white-space:nowrap;margin-bottom:2px;cursor:pointer;transition:background .1s;}
-.db-cal-menu:hover{background:rgba(99,102,241,.4);}
-.cal-menu-override{background:rgba(245,158,11,.25)!important;color:var(--yellow)!important;}
+.db-cal-menu{font-size:10px;padding:2px 5px;border-radius:3px;background:rgba(99,102,241,.22);color:#a5b4fc;font-weight:700;display:inline-block;white-space:nowrap;margin-bottom:2px;cursor:pointer;transition:background .1s;}
+.db-cal-menu:hover{background:rgba(99,102,241,.45);}
+.cal-menu-override{background:rgba(245,158,11,.3)!important;color:#fcd34d!important;}
 #menu-picker-popup{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px;min-width:130px;}
 .menu-picker-chip{padding:6px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;transition:background .1s;color:var(--text1);}
 .menu-picker-chip:hover{background:var(--accent);color:#fff;}
 .menu-picker-chip.active{background:rgba(99,102,241,.3);color:var(--accent2);}
-.db-cal-stars{font-size:8px;color:var(--yellow);letter-spacing:-1.5px;line-height:1;}
+.db-cal-stars{font-size:9px;color:#fbbf24;letter-spacing:-1px;line-height:1;}
 .db-cal-apps{display:flex;gap:2px;margin-top:3px;flex-wrap:wrap;}
-.db-cal-app-dot{width:5px;height:5px;border-radius:50%;}
+.db-cal-app-dot{width:6px;height:6px;border-radius:50%;}
 .db-cal-wp{position:absolute;top:3px;right:3px;font-size:7px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 3px;font-weight:700;cursor:pointer;}
-.db-cal-legend{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text3);}
+.db-cal-legend{display:flex;align-items:center;gap:4px;font-size:10px;color:var(--text2);}
 .db-cal-leg-dot{width:8px;height:8px;border-radius:2px;background:var(--surface2);}
 /* Calendar event/competition chips */
-.db-cal-event{font-size:9px;padding:1px 4px;border-radius:3px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;margin-top:1px;cursor:pointer;}
-.db-cal-comp{font-size:9px;padding:1px 4px;border-radius:3px;background:#ef4444;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;margin-top:1px;}
+.db-cal-event{font-size:10px;padding:2px 5px;border-radius:3px;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;margin-top:2px;cursor:pointer;}
+.db-cal-comp{font-size:10px;padding:2px 5px;border-radius:3px;background:#ef4444;color:#fff;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:100%;display:block;margin-top:2px;}
 /* Event color chips in modal */
 .ev-color-chip{padding:4px 8px;border-radius:6px;font-size:11px;font-weight:700;color:#fff;cursor:pointer;opacity:.6;transition:opacity .15s;}
 .ev-color-chip.active{opacity:1;outline:2px solid #fff;outline-offset:1px;}
@@ -425,8 +426,14 @@ canvas{max-height:240px}
     max-width: 100% !important; width: 100% !important;
     border-radius: 20px 20px 0 0 !important;
     max-height: 92svh !important; overflow-y: auto;
-    padding-bottom: max(16px, env(safe-area-inset-bottom));
+    /* ボトムナビ(72px)＋セーフエリア分だけ余白を確保 → 保存ボタンが隠れない */
+    padding-bottom: calc(80px + max(8px, env(safe-area-inset-bottom))) !important;
   }
+  /* 日付・時間などの横並びを縦積みに（重なり防止） */
+  .modal .row { flex-direction: column !important; gap: 4px !important; }
+  /* 評価ボタンを画面内に収める */
+  .cond-dots { flex-wrap: wrap; gap: 6px; }
+  .cond-dot { width: 40px; height: 40px; font-size: 13px; }
 
   /* インプット（iOSズーム防止） */
   input, select, textarea { font-size: 16px !important; }
@@ -435,8 +442,16 @@ canvas{max-height:240px}
   table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
 
   /* カレンダー */
-  .cal-grid { font-size: 11px; }
-  .cal-day { min-height: 36px; padding: 2px; }
+  :root { --cal-cell-h: 72px; }
+  .db-cal-grid { gap: 2px; }
+  .db-cal-cell { padding: 4px 3px; min-height: var(--cal-cell-h, 72px); }
+  .db-cal-num { font-size: 11px; margin-bottom: 1px; }
+  .db-cal-menu { font-size: 9px; padding: 1px 3px; white-space: normal; line-height: 1.2; }
+  .db-cal-comp { font-size: 9px; padding: 1px 3px; }
+  .db-cal-event { font-size: 9px; padding: 1px 3px; }
+  .db-cal-stars { font-size: 8px; }
+  .db-cal-app-dot { width: 5px; height: 5px; }
+  .db-cal-legend { font-size: 9px; }
 
   /* 演技構成表 */
   .routine-grid { grid-template-columns: 1fr !important; }
@@ -511,7 +526,7 @@ canvas{max-height:240px}
       <div class="db-cal-legend"><div class="db-cal-leg-dot" style="border:1px solid var(--border);"></div>未記録</div>
       <div class="db-cal-legend"><span style="font-size:8px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 4px;font-weight:700;">📋</span>週次計画</div>
     </div>
-    <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" title="ドラッグしてカレンダーの高さを調整"></div>
+    <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" ontouchstart="calResizeStart(event)" title="ドラッグ（長押しスライド）でカレンダーの高さを調整"></div>
   </div>
 
   <div class="grid2" style="margin-bottom:20px;">
@@ -550,7 +565,7 @@ canvas{max-height:240px}
         <div class="db-cal-legend"><span style="font-size:8px;background:#ef4444;color:#fff;border-radius:3px;padding:1px 3px;font-weight:700;">🏆</span>試合</div>
         <div class="db-cal-legend"><span style="font-size:8px;background:#475569;color:#fff;border-radius:3px;padding:1px 3px;font-weight:700;">📌</span>予定</div>
       </div>
-      <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" title="ドラッグしてカレンダーの高さを調整"></div>
+      <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" ontouchstart="calResizeStart(event)" title="ドラッグ（長押しスライド）でカレンダーの高さを調整"></div>
     </div>
     <!-- 月次内省リスト -->
     <div id="jcal-monthly-reviews"></div>
@@ -1822,16 +1837,28 @@ function renderDashboardCalendar(){
 }
 function calResizeStart(e){
   e.preventDefault();
-  const startY=e.clientY;
+  const isTouch=e.touches!=null;
+  const startY=isTouch?e.touches[0].clientY:e.clientY;
   const startH=parseInt(getComputedStyle(document.documentElement).getPropertyValue('--cal-cell-h'))||66;
   function onMove(e){
-    const h=Math.max(40,Math.min(200,startH+(e.clientY-startY)));
+    const y=isTouch?e.touches[0].clientY:e.clientY;
+    const h=Math.max(40,Math.min(200,startH+(y-startY)));
     document.documentElement.style.setProperty('--cal-cell-h',h+'px');
     localStorage.setItem('gymtrack_cal_cell_h',h);
   }
-  function onUp(){document.removeEventListener('mousemove',onMove);document.removeEventListener('mouseup',onUp);}
-  document.addEventListener('mousemove',onMove);
-  document.addEventListener('mouseup',onUp);
+  function onUp(){
+    document.removeEventListener('mousemove',onMove);
+    document.removeEventListener('mouseup',onUp);
+    document.removeEventListener('touchmove',onMove);
+    document.removeEventListener('touchend',onUp);
+  }
+  if(isTouch){
+    document.addEventListener('touchmove',onMove,{passive:false});
+    document.addEventListener('touchend',onUp);
+  } else {
+    document.addEventListener('mousemove',onMove);
+    document.addEventListener('mouseup',onUp);
+  }
 }
 function toggleSidebar(){
   const sb=document.getElementById('sidebar');
@@ -3103,12 +3130,17 @@ function renderAppCard(app,r){
       <thead><tr><th style="width:18px;"></th><th style="width:22px;">#</th><th>要素</th><th style="width:24px;">難度</th><th style="width:40px;">DV</th><th style="width:28px;">EG</th><th style="width:52px;">加点CV</th><th style="width:44px;"></th></tr></thead>
       <tbody id="rtbl-${app}">
         ${elems.map((e,i)=>`<tr class="${i>=8?'uncounted':''}" draggable="true"
+            data-tnd-app="${app}" data-tnd-idx="${i}"
             ondragstart="dndStart('${app}',${i},this)"
             ondragover="dndOver(this,event)"
             ondragleave="dndLeave(this)"
             ondrop="dndDrop('${app}',${i},event)"
-            ondragend="dndEnd()">
-          <td style="color:var(--text3);font-size:14px;text-align:center;cursor:grab;padding:0 4px;" title="ドラッグして並べ替え">⠿</td>
+            ondragend="dndEnd()"
+            ontouchstart="tndStart('${app}',${i},this,event)"
+            ontouchmove="tndMove(event)"
+            ontouchend="tndEnd(event)"
+            ontouchcancel="tndEnd(event)">
+          <td style="color:var(--text3);font-size:14px;text-align:center;cursor:grab;padding:0 4px;user-select:none;-webkit-user-select:none;" title="長押しスライドで並べ替え">⠿</td>
           <td class="idx">${i+1}</td>
           <td class="ie-name" onclick="ieEditName('${app}',${i},this)">${e.nameJa}</td>
           <td class="ie-sel dv-cell dv-${e.dvL||DV_LETTER(e.dv)}" onclick="ieEditDV('${app}',${i},this)" title="タップで変更">${e.dvL||DV_LETTER(e.dv)}</td>
@@ -3363,6 +3395,53 @@ function dndDrop(app,toIdx,e){
 function dndEnd(){
   document.querySelectorAll('.drag-ghost,.drag-target').forEach(r=>{r.classList.remove('drag-ghost');r.classList.remove('drag-target');});
   _dnd={app:null,from:null};
+}
+// ---- TOUCH DRAG AND DROP (スマホ長押しドラッグ) ----
+let _tnd={app:null,from:null,active:false,timer:null,ghostEl:null};
+function tndStart(app,idx,el,e){
+  // 既存ドラッグがあればリセット
+  if(_tnd.timer){clearTimeout(_tnd.timer);_tnd.timer=null;}
+  _tnd={app,from:idx,active:false,timer:null,ghostEl:el};
+  _tnd.timer=setTimeout(()=>{
+    _tnd.active=true;
+    _tnd.timer=null;
+    el.classList.add('drag-ghost');
+    if(navigator.vibrate)navigator.vibrate(30);
+  },280);
+}
+function tndMove(e){
+  if(!_tnd.active){
+    // ドラッグ未確定中に指が動いたらタイマーキャンセル（スクロール優先）
+    if(_tnd.timer){clearTimeout(_tnd.timer);_tnd.timer=null;}
+    return;
+  }
+  e.preventDefault();
+  const t=e.touches[0];
+  document.querySelectorAll('.drag-target').forEach(r=>r.classList.remove('drag-target'));
+  const over=document.elementFromPoint(t.clientX,t.clientY);
+  const row=over?.closest('tr[data-tnd-app]');
+  if(row&&row.dataset.tndApp===_tnd.app&&row!==_tnd.ghostEl)row.classList.add('drag-target');
+}
+function tndEnd(e){
+  if(_tnd.timer){clearTimeout(_tnd.timer);_tnd.timer=null;}
+  if(!_tnd.active){_tnd={app:null,from:null,active:false,timer:null,ghostEl:null};return;}
+  const t=e.changedTouches[0];
+  const over=document.elementFromPoint(t.clientX,t.clientY);
+  const row=over?.closest('tr[data-tnd-app]');
+  if(row&&row.dataset.tndApp===_tnd.app){
+    const toIdx=parseInt(row.dataset.tndIdx);
+    if(!isNaN(toIdx)&&toIdx!==_tnd.from){
+      const r=currentRoutine();
+      if(r&&r[_tnd.app]){
+        const elems=r[_tnd.app].elements;
+        const [moved]=elems.splice(_tnd.from,1);
+        elems.splice(toIdx,0,moved);
+        saveDB();renderRoutinePage();
+      }
+    }
+  }
+  document.querySelectorAll('.drag-ghost,.drag-target').forEach(r=>{r.classList.remove('drag-ghost','drag-target');});
+  _tnd={app:null,from:null,active:false,timer:null,ghostEl:null};
 }
 // ---- INLINE EDIT (routine table) ----
 function _ieScroll(){return document.getElementById('content').scrollTop;}
