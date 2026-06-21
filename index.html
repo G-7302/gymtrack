@@ -312,13 +312,129 @@ canvas{max-height:240px}
 ::-webkit-scrollbar{width:5px}
 ::-webkit-scrollbar-track{background:transparent}
 ::-webkit-scrollbar-thumb{background:var(--border);border-radius:99px}
+
+/* モバイル用トップバー要素（デスクトップでは非表示） */
+.mobile-topbar-left { display: none; align-items: center; gap: 8px; }
+.mobile-logo { font-size: 17px; font-weight: 800; color: var(--text); white-space: nowrap; }
+.hamburger-btn {
+  background: none; border: none; cursor: pointer;
+  font-size: 26px; line-height: 1; color: var(--text2);
+  padding: 4px 8px; border-radius: 6px;
+}
+.hamburger-btn:active { background: var(--surface2); }
+
+/* ===================== MOBILE ===================== */
+@media (max-width: 768px) {
+  /* レイアウト */
+  body { display: block; height: 100svh; overflow: hidden; }
+  #main { height: 100svh; display: flex; flex-direction: column; }
+  #content {
+    flex: 1; overflow-y: auto;
+    padding: 14px 14px;
+    padding-bottom: calc(72px + env(safe-area-inset-bottom) + 8px);
+  }
+
+  /* サイドバー：通常は完全に隠す、▶️ボタンも含め */
+  #sidebar { display: none !important; }
+  #sidebar-toggle { display: none !important; }
+
+  /* サイドバードロワー（開いたとき） */
+  #sidebar.mobile-open {
+    display: flex !important;
+    position: fixed; top: 0; left: 0; bottom: 0; z-index: 200;
+    width: 260px !important; min-width: 260px !important;
+    box-shadow: 4px 0 24px rgba(0,0,0,.35);
+    animation: slideInLeft .2s ease;
+    overflow-y: auto;
+  }
+  #sidebar.mobile-open #sidebar-toggle { display: none !important; }
+  #sidebar.mobile-open #sidebar-resize-handle { display: none !important; }
+  #mobile-sidebar-overlay {
+    display: none;
+    position: fixed; inset: 0; z-index: 199;
+    background: rgba(0,0,0,.4);
+  }
+  #mobile-sidebar-overlay.open { display: block; }
+  @keyframes slideInLeft {
+    from { transform: translateX(-100%); }
+    to   { transform: translateX(0); }
+  }
+
+  /* トップバー */
+  .topbar { padding: 10px 14px; gap: 8px; }
+  .mobile-topbar-left { display: flex !important; }
+  .pc-page-title { display: none !important; }
+  #today-date { display: none; }
+  .no-mobile { display: none !important; }
+
+  /* ボトムナビ */
+  #mobile-nav {
+    display: flex !important;
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: var(--surface);
+    border-top: 1px solid var(--border);
+    padding-top: 6px;
+    padding-bottom: max(10px, env(safe-area-inset-bottom));
+  }
+  #mobile-nav button {
+    flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px;
+    background: none; border: none; cursor: pointer;
+    font-size: 10px; color: var(--text3); padding: 2px 0;
+    transition: color .15s;
+  }
+  #mobile-nav button .mn-icon { font-size: 20px; line-height: 1.2; }
+  #mobile-nav button.active { color: var(--accent2); }
+
+  /* FABボタン */
+  #fab {
+    display: flex !important;
+    position: fixed; bottom: calc(68px + env(safe-area-inset-bottom)); right: 16px;
+    z-index: 99; width: 50px; height: 50px; border-radius: 50%;
+    background: var(--accent2); color: #fff; border: none; cursor: pointer;
+    font-size: 26px; align-items: center; justify-content: center;
+    box-shadow: 0 4px 16px rgba(99,102,241,.45);
+  }
+
+  /* グリッドを1カラムに */
+  .grid2, .grid3 { grid-template-columns: 1fr !important; }
+
+  /* カード */
+  .card { padding: 14px; }
+
+  /* ボタン */
+  .btn { min-height: 42px; font-size: 14px; }
+  .btn-sm { min-height: 36px; font-size: 13px; }
+
+  /* モーダル：下からスライドシート */
+  .modal-overlay { align-items: flex-end !important; padding: 0 !important; }
+  .modal {
+    max-width: 100% !important; width: 100% !important;
+    border-radius: 20px 20px 0 0 !important;
+    max-height: 92svh !important; overflow-y: auto;
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  /* インプット（iOSズーム防止） */
+  input, select, textarea { font-size: 16px !important; }
+
+  /* テーブル横スクロール */
+  table { display: block; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+
+  /* カレンダー */
+  .cal-grid { font-size: 11px; }
+  .cal-day { min-height: 36px; padding: 2px; }
+
+  /* 演技構成表 */
+  .routine-grid { grid-template-columns: 1fr !important; }
+  .routine-grid-3 { grid-template-columns: 1fr !important; }
+}
 </style>
 </head>
 <body>
 
 <div id="sidebar">
   <div id="sidebar-resize-handle" onmousedown="sidebarResizeStart(event)"></div>
-  <div class="logo"><h1>🤸 GymTrack</h1><p class="nav-label">体操競技 練習管理</p></div>
+  <div class="logo" onclick="window.innerWidth<=768?closeMobileSidebar():toggleSidebar()" style="cursor:pointer;" title="クリックでサイドバー開閉"><h1>🤸 GymTrack</h1><p class="nav-label">体操競技 練習管理</p></div>
   <nav>
     <span class="nav-section">メイン</span>
     <a class="active" onclick="goto('dashboard')" id="nav-dashboard"><span class="icon">🏠</span><span class="nav-label">ダッシュボード</span></a>
@@ -337,11 +453,17 @@ canvas{max-height:240px}
 
 <div id="main">
   <div class="topbar">
-    <h2 id="page-title">ダッシュボード</h2>
+    <!-- モバイル用ロゴ＋≡ -->
+    <div class="mobile-topbar-left">
+      <span class="mobile-logo">🤸 GymTrack</span>
+      <button class="hamburger-btn" onclick="toggleMobileSidebar()">≡</button>
+    </div>
+    <!-- PC用ページタイトル -->
+    <h2 id="page-title" class="pc-page-title">ダッシュボード</h2>
     <div class="topbar-right">
       <span id="sync-status" style="font-size:11px;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--text3);">⏳ 接続中...</span>
       <span id="today-date" style="font-size:12px;color:var(--text3);"></span>
-      <button class="btn btn-primary btn-sm" onclick="openJournalModal()">＋ 練習記録</button>
+      <button class="btn btn-primary btn-sm no-mobile" onclick="openJournalModal()">＋ 練習記録</button>
     </div>
   </div>
   <div id="content">
@@ -1344,6 +1466,11 @@ function goto(page){
   PAGES.forEach(p=>{
     document.getElementById('page-'+p).classList.toggle('active',p===page);
     document.getElementById('nav-'+p).classList.toggle('active',p===page);
+  });
+  // ボトムナビのアクティブ状態を同期
+  ['dashboard','journal','plan','routine','results'].forEach(p=>{
+    const btn=document.getElementById('mn-'+p);
+    if(btn) btn.classList.toggle('active', p===page);
   });
   document.getElementById('page-title').textContent=PAGE_TITLES[page];
   localStorage.setItem('gymtrack_lastpage',page);
@@ -3608,7 +3735,47 @@ function init(){
   // Firebase同期開始（ローカル表示後に非同期で実行）
   setTimeout(startFirebaseSync, 100);
 }
+function toggleMobileSidebar(){
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('mobile-sidebar-overlay');
+  const isOpen=sb.classList.toggle('mobile-open');
+  ov.classList.toggle('open', isOpen);
+}
+function closeMobileSidebar(){
+  document.getElementById('sidebar').classList.remove('mobile-open');
+  document.getElementById('mobile-sidebar-overlay').classList.remove('open');
+}
+// サイドバーのナビリンクをモバイルでタップしたら閉じる
+document.addEventListener('click', e=>{
+  if(e.target.closest('#sidebar a') && window.innerWidth<=768) closeMobileSidebar();
+});
 window.addEventListener('load',init);
 </script>
+
+<!-- モバイルサイドバーオーバーレイ -->
+<div id="mobile-sidebar-overlay" onclick="closeMobileSidebar()"></div>
+
+<!-- ボトムナビ（モバイルのみ表示） -->
+<nav id="mobile-nav" style="display:none;">
+  <button id="mn-dashboard" onclick="goto('dashboard')">
+    <span class="mn-icon">🏠</span>ホーム
+  </button>
+  <button id="mn-journal" onclick="goto('journal')">
+    <span class="mn-icon">📓</span>日誌
+  </button>
+  <button id="mn-plan" onclick="goto('plan')">
+    <span class="mn-icon">🎯</span>逆算
+  </button>
+  <button id="mn-routine" onclick="goto('routine')">
+    <span class="mn-icon">📋</span>構成表
+  </button>
+  <button id="mn-results" onclick="goto('results')">
+    <span class="mn-icon">🏆</span>結果
+  </button>
+</nav>
+
+<!-- FABボタン（モバイルのみ） -->
+<button id="fab" style="display:none;" onclick="openJournalModal()" title="練習記録を追加">＋</button>
+
 </body>
 </html>
