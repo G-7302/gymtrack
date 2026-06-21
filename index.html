@@ -525,10 +525,10 @@ canvas{max-height:240px}
 
   <!-- ワンタッチ記録ボタン -->
   <button id="db-quick-add" onclick="openJournalWithDate('__today__')" style="display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;">
-    <span style="font-size:22px;">📓</span>
+    <span id="db-quick-icon" style="font-size:22px;">📓</span>
     <div>
       <div style="font-size:11px;opacity:.8;" id="db-quick-menu-label">今日の練習メニュー</div>
-      <div>今日の練習を記録する →</div>
+      <div id="db-quick-label">今日の練習を記録する →</div>
     </div>
     <div style="margin-left:auto;font-size:20px;opacity:.6;">＋</div>
   </button>
@@ -538,6 +538,7 @@ canvas{max-height:240px}
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
       <button onclick="calMove(-1)" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0 4px;">‹</button>
       <div class="card-title" style="margin:0;flex:1;" id="db-cal-title">練習カレンダー</div>
+      <button onclick="calJumpToday()" style="background:var(--surface2);border:1px solid var(--border);color:var(--accent);font-size:11px;font-weight:700;cursor:pointer;padding:3px 8px;border-radius:6px;">今日</button>
       <button onclick="calMove(1)" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0 4px;">›</button>
     </div>
     <div id="db-calendar"></div>
@@ -1621,8 +1622,38 @@ function renderDashboard(){
     </div>`:''}
   `:'<div class="empty" style="padding:12px;"><div class="icon">🎯</div><p style="font-size:12px;">試合を登録してください</p></div>';
 
-  // ── ワンタッチボタン ラベル更新 ──
-  document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} ${menuType||'練習日'}`;
+  // ── ワンタッチボタン：メニュータイプで内容を切り替え ──
+  const btn=document.getElementById('db-quick-add');
+  const isMonday=dayOfWeek===1;
+  if(menuType==='休養'&&isMonday){
+    // 月曜休養 → 週次計画
+    document.getElementById('db-quick-menu-label').textContent=`今日は 📋 月曜日（${menuIcon}休養）`;
+    document.getElementById('db-quick-icon').textContent='📋';
+    document.getElementById('db-quick-label').textContent='週次計画を記録する →';
+    btn.onclick=()=>openWeekPlanModal(todayStr);
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+  } else if(menuType==='休養'){
+    // 休養日（月曜以外）
+    document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} 休養日`;
+    document.getElementById('db-quick-icon').textContent='😴';
+    document.getElementById('db-quick-label').textContent='休養日を記録する →';
+    btn.onclick=()=>openJournalWithDate('__today__');
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+  } else if(isMonday){
+    // 月曜練習日 → 週次計画
+    document.getElementById('db-quick-menu-label').textContent=`今日は 📋 月曜日（${menuIcon}${menuType}）`;
+    document.getElementById('db-quick-icon').textContent='📋';
+    document.getElementById('db-quick-label').textContent='週次計画を記録する →';
+    btn.onclick=()=>openWeekPlanModal(todayStr);
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+  } else {
+    // 通常練習日
+    document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} ${menuType||'練習日'}`;
+    document.getElementById('db-quick-icon').textContent='📓';
+    document.getElementById('db-quick-label').textContent='今日の練習を記録する →';
+    btn.onclick=()=>openJournalWithDate('__today__');
+    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+  }
 
   // ── 最近の練習日誌 ──
   document.getElementById('db-recent-journal').innerHTML=recent?`
@@ -1867,6 +1898,12 @@ function calMove(dir){
   calDisplayMonth+=dir;
   if(calDisplayMonth>11){calDisplayMonth=0;calDisplayYear++;}
   if(calDisplayMonth<0){calDisplayMonth=11;calDisplayYear--;}
+  renderDashboardCalendar();
+}
+function calJumpToday(){
+  const n=new Date();
+  calDisplayYear=n.getFullYear();
+  calDisplayMonth=n.getMonth();
   renderDashboardCalendar();
 }
 function renderDashboardCalendar(){
@@ -4136,13 +4173,15 @@ function init(){
       // ヘッダー日付を更新
       document.getElementById('today-date').textContent =
         new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+      // カレンダーを今日の月にリセット
+      calDisplayYear = null;
+      calDisplayMonth = null;
       // 現在表示中のページを再描画
       const cur = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
       if (cur === 'dashboard') { renderDashboard(); }
       else if (cur === 'journal') { renderJournalList(); renderJournalCalendar(); }
       else if (cur === 'plan') { renderPlanList(); }
-      // カレンダー（ダッシュボード）は常に更新
-      renderDashboardCalendar();
+      else { renderDashboardCalendar(); } // 他ページでもカレンダーを更新
     }
   }, 60 * 1000); // 1分ごとにチェック
 }
