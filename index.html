@@ -701,47 +701,36 @@ canvas{max-height:240px}
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
     <div class="modal-title"><span id="j-modal-day-label">📓 練習記録</span><button class="modal-close" onclick="closeModal('modal-journal')">✕</button></div>
 
-    <!-- 基本情報 -->
-    <div class="row">
-      <div class="form-group"><label>日付</label><input type="date" id="j-date" onchange="onJDateChange()"></div>
-      <div class="form-group"><label>練習時間（分）</label><input type="number" id="j-duration" min="0"></div>
-    </div>
+    <!-- ── 基本情報 ── -->
+    <div class="form-group"><label>日付</label><input type="date" id="j-date" onchange="onJDateChange()"></div>
+    <div class="form-group"><label>練習時間（分）</label><input type="number" id="j-duration" min="0" placeholder="例：120"></div>
     <div class="form-group"><label>練習種目（複数可）</label><div id="j-apparatus-chips" class="app-chips"></div></div>
-    <div class="row">
-      <div class="form-group"><label>体調（1〜5）</label><div class="cond-dots" id="j-condition-dots">
-        <div class="cond-dot" onclick="setCondition(1)" data-v="1">1</div><div class="cond-dot" onclick="setCondition(2)" data-v="2">2</div>
-        <div class="cond-dot" onclick="setCondition(3)" data-v="3">3</div><div class="cond-dot" onclick="setCondition(4)" data-v="4">4</div>
+    <div class="form-group"><label>体調（1〜5）</label>
+      <div class="cond-dots" id="j-condition-dots">
+        <div class="cond-dot" onclick="setCondition(1)" data-v="1">1</div>
+        <div class="cond-dot" onclick="setCondition(2)" data-v="2">2</div>
+        <div class="cond-dot" onclick="setCondition(3)" data-v="3">3</div>
+        <div class="cond-dot" onclick="setCondition(4)" data-v="4">4</div>
         <div class="cond-dot" onclick="setCondition(5)" data-v="5">5</div>
-      </div></div>
-      <div class="form-group"><label>メンタル（1〜5）</label><div class="cond-dots" id="j-mental-dots">
-        <div class="cond-dot" onclick="setMental(1)" data-v="1">1</div><div class="cond-dot" onclick="setMental(2)" data-v="2">2</div>
-        <div class="cond-dot" onclick="setMental(3)" data-v="3">3</div><div class="cond-dot" onclick="setMental(4)" data-v="4">4</div>
+      </div>
+    </div>
+    <div class="form-group"><label>メンタル（1〜5）</label>
+      <div class="cond-dots" id="j-mental-dots">
+        <div class="cond-dot" onclick="setMental(1)" data-v="1">1</div>
+        <div class="cond-dot" onclick="setMental(2)" data-v="2">2</div>
+        <div class="cond-dot" onclick="setMental(3)" data-v="3">3</div>
+        <div class="cond-dot" onclick="setMental(4)" data-v="4">4</div>
         <div class="cond-dot" onclick="setMental(5)" data-v="5">5</div>
-      </div></div>
+      </div>
     </div>
 
-    <!-- ▼ PRE：練習前 -->
-    <div class="journal-section-header">▲ 練習前</div>
+    <!-- ── 全体 ── -->
+    <div class="journal-section-header">📋 全体</div>
     <div id="j-week-ref" style="display:none;margin-bottom:12px;padding:10px 12px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;"></div>
     <div class="form-group"><label>今日のテーマ</label><input type="text" id="j-theme" placeholder="例：後転とびの踏み切りタイミングを固める"></div>
-    <div class="form-group"><label>意識ポイント（1〜3点）</label><textarea id="j-focus" style="min-height:60px;" placeholder="例：・膝を伸ばす&#10;・視線を前に&#10;・着地で止まる"></textarea></div>
-    <div class="form-group"><label>今日できないこと・制約</label>
-      <input type="text" id="j-constraints" placeholder="例：左手の甲が痛い" oninput="onConstraintInput()">
-    </div>
-
-    <!-- 制約モード（コンサル） -->
-    <div id="j-consult-zone" style="display:none;">
-      <div class="journal-section-header" style="background:rgba(234,179,8,.12);border-color:var(--yellow);color:var(--yellow);">🤝 制約モード — 今日の方針を一緒に整理しよう</div>
-      <div class="form-group"><label>① 直近の試合まで何週間ありますか？</label><input type="text" id="j-c1" placeholder="例：8週間 / 来週が試合"></div>
-      <div class="form-group"><label>② 制約があっても取り組める練習や種目は？</label><textarea id="j-c2" style="min-height:60px;" placeholder="例：床のつなぎ動作、体幹トレーニング、映像でのイメージ練習"></textarea></div>
-      <div class="form-group"><label>③ この制約期間に優先すべき技術要素は？</label><textarea id="j-c3" style="min-height:60px;" placeholder="例：Eスコアに直結する基礎動作の見直し、つり輪の静止技"></textarea></div>
-      <div class="form-group"><label>④ 制約が明けたら最初に取り戻したい感覚は？</label><input type="text" id="j-c4" placeholder="例：床の後転とびの踏み切り感覚"></div>
-      <div id="j-consult-summary" style="display:none;margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;line-height:1.7;"></div>
-      <button class="btn btn-ghost btn-sm" onclick="generateConsultSummary()" style="margin-bottom:12px;">今日の方針をまとめる →</button>
-    </div>
-
-    <!-- ▼ POST：練習後 -->
-    <div class="journal-section-header">▼ 練習後</div>
+    <div class="form-group"><label>意識ポイント</label><input type="text" id="j-overall-focus" placeholder="例：踏み切りで膝をしっかり伸ばす"></div>
+    <div class="form-group"><label>振り返り</label><input type="text" id="j-overall-review" placeholder="例：3本中2本決まった。踏み切り位置が安定してきた"></div>
+    <div class="form-group"><label>次のアクション</label><input type="text" id="j-overall-action" placeholder="例：通しに組み込んで本番に近い状況で確認する"></div>
     <div class="form-group"><label>達成度</label>
       <div class="cond-dots" id="j-achievement-dots">
         <div class="cond-dot" onclick="setAchievement(1)" data-v="1">★1</div>
@@ -751,13 +740,41 @@ canvas{max-height:240px}
         <div class="cond-dot" onclick="setAchievement(5)" data-v="5">★5</div>
       </div>
     </div>
-    <div class="form-group"><label>良かったこと</label><textarea id="j-good" style="min-height:60px;" placeholder="例：後転とびの踏み切りが3本中2本決まった"></textarea></div>
-    <div class="form-group"><label>課題・改善点</label><textarea id="j-issues" style="min-height:60px;" placeholder="例：着地で左に流れる"></textarea></div>
-    <div class="form-group"><label>なぜそうなったか（深掘り）</label><textarea id="j-why" style="min-height:60px;" placeholder="例：助走のリズムが一定でないため踏み切り位置がズレている"></textarea></div>
-    <div class="form-group"><label>次の練習でやること（アクションプラン）</label><textarea id="j-next" style="min-height:60px;" placeholder="例：助走3歩から踏み切りの練習を10本→通しに組み込む"></textarea></div>
+
+    <!-- ── 制約モード（折りたたみ） ── -->
+    <details id="j-constraint-details" style="margin-bottom:14px;border:1px solid var(--border);border-radius:var(--radius-sm);padding:8px 12px;">
+      <summary style="cursor:pointer;font-size:13px;color:var(--text2);user-select:none;list-style:none;display:flex;align-items:center;gap:6px;">
+        <span>⚠️</span><span>今日できないこと・制約（任意）</span>
+      </summary>
+      <div style="padding-top:10px;">
+        <div class="form-group"><label>制約内容</label><input type="text" id="j-constraints" placeholder="例：左手の甲が痛い" oninput="onConstraintInput()"></div>
+        <div id="j-consult-zone" style="display:none;">
+          <div class="journal-section-header" style="background:rgba(234,179,8,.12);border-color:var(--yellow);color:var(--yellow);">🤝 制約モード — 今日の方針を一緒に整理しよう</div>
+          <div class="form-group"><label>① 直近の試合まで何週間ありますか？</label><input type="text" id="j-c1" placeholder="例：8週間 / 来週が試合"></div>
+          <div class="form-group"><label>② 制約があっても取り組める練習や種目は？</label><textarea id="j-c2" style="min-height:60px;" placeholder="例：床のつなぎ動作、体幹トレーニング"></textarea></div>
+          <div class="form-group"><label>③ この制約期間に優先すべき技術要素は？</label><textarea id="j-c3" style="min-height:60px;" placeholder="例：Eスコアに直結する基礎動作の見直し"></textarea></div>
+          <div class="form-group"><label>④ 制約が明けたら最初に取り戻したい感覚は？</label><input type="text" id="j-c4" placeholder="例：床の後転とびの踏み切り感覚"></div>
+          <div id="j-consult-summary" style="display:none;margin-top:8px;padding:12px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;line-height:1.7;"></div>
+          <button class="btn btn-ghost btn-sm" onclick="generateConsultSummary()" style="margin-bottom:4px;">今日の方針をまとめる →</button>
+        </div>
+      </div>
+    </details>
+
+    <!-- ── アップ ── -->
+    <div class="journal-section-header">🔄 アップ</div>
+    <div class="form-group"><label>意識ポイント</label><input type="text" id="j-warmup-focus" placeholder="例：肩甲骨の可動域を意識して動かす"></div>
+    <div class="form-group"><label>振り返り・アクション</label><input type="text" id="j-warmup-review" placeholder="例：体がよく動いた。次回も同じルーティンで"></div>
+
+    <!-- ── 種目別（選択種目に連動して動的生成） ── -->
+    <div class="journal-section-header">🤸 種目別</div>
+    <div id="j-apparatus-notes">
+      <div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">↑ 上の種目チップを選択するとここに入力欄が表示されます</div>
+    </div>
+
+    <!-- ── メモ ── -->
     <div class="form-group"><label>メモ・その他気づき</label><textarea id="j-notes" style="min-height:50px;"></textarea></div>
 
-    <!-- 技チェック -->
+    <!-- ── 技チェック ── -->
     <div class="form-group"><label>練習した技（チェックで+2%）</label>
       <div id="j-skill-checkboxes" style="max-height:120px;overflow-y:auto;background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);"></div>
     </div>
@@ -2088,13 +2105,17 @@ function openJournalWithDate(dateStr){
 }
 function openJournalModal(editId){
   jApparatus=new Set(); journalCondition=0; journalMental=0; journalAchievement=0;
+  jApparatusNoteData={};
   const today=new Date().toISOString().slice(0,10);
+
   // フォームリセット
-  ['j-theme','j-focus','j-constraints','j-good','j-issues','j-why','j-next','j-notes'].forEach(id=>document.getElementById(id).value='');
-  ['j-c1','j-c2','j-c3','j-c4'].forEach(id=>document.getElementById(id).value='');
+  ['j-theme','j-overall-focus','j-overall-review','j-overall-action',
+   'j-warmup-focus','j-warmup-review','j-notes',
+   'j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('j-edit-id').value=editId||'';
   document.getElementById('j-consult-zone').style.display='none';
   document.getElementById('j-consult-summary').style.display='none';
+  const det=document.getElementById('j-constraint-details');if(det)det.removeAttribute('open');
 
   if(editId){
     const j=DB.journal.find(x=>x.id===editId);
@@ -2106,28 +2127,71 @@ function openJournalModal(editId){
       journalMental=j.mental||0;
       journalAchievement=j.achievement||0;
       document.getElementById('j-theme').value=j.theme||'';
-      document.getElementById('j-focus').value=j.focusPoints||'';
-      document.getElementById('j-constraints').value=j.constraints||'';
-      document.getElementById('j-good').value=j.goodPoints||'';
-      document.getElementById('j-issues').value=j.issues||'';
-      document.getElementById('j-why').value=j.whyAnalysis||'';
-      document.getElementById('j-next').value=j.nextAction||'';
+      // 新フィールド（旧フィールドからフォールバック）
+      document.getElementById('j-overall-focus').value=j.overallFocus||j.focusPoints||'';
+      document.getElementById('j-overall-review').value=j.overallReview||j.goodPoints||'';
+      document.getElementById('j-overall-action').value=j.overallAction||j.nextAction||'';
+      document.getElementById('j-warmup-focus').value=j.warmupFocus||'';
+      document.getElementById('j-warmup-review').value=j.warmupReview||'';
       document.getElementById('j-notes').value=j.notes||'';
-      if(j.constraints)document.getElementById('j-consult-zone').style.display='';
+      document.getElementById('j-constraints').value=j.constraints||'';
+      if(j.constraints){document.getElementById('j-consult-zone').style.display='';if(det)det.setAttribute('open','');}
+      ['c1','c2','c3','c4'].forEach(k=>{const el=document.getElementById('j-'+k);if(el)el.value=j.consultAnswers?.[{c1:'weeksToComp',c2:'canDo',c3:'priority',c4:'sensation'}[k]]||'';});
+      // 種目別ノートを復元
+      jApparatusNoteData=JSON.parse(JSON.stringify(j.apparatusNotes||{}));
     }
   } else {
     document.getElementById('j-date').value=today;
   }
 
-  const apps=APPARATUS_M;
-  document.getElementById('j-apparatus-chips').innerHTML=apps.map(a=>`<div class="app-chip${jApparatus.has(a)?' selected':''}" onclick="toggleJApp('${a}')" id="japp-${a}">${COP[a].name}</div>`).join('');
+  document.getElementById('j-apparatus-chips').innerHTML=APPARATUS_M.map(a=>`<div class="app-chip${jApparatus.has(a)?' selected':''}" onclick="toggleJApp('${a}')" id="japp-${a}">${COP[a].name}</div>`).join('');
+  renderApparatusNotes();
   updateCondDots(); updateMentalDots(); updateAchievementDots();
   document.getElementById('j-skill-checkboxes').innerHTML=DB.skills.map(s=>`<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;"><input type="checkbox" value="${s.id}" style="width:auto;"><span style="flex:1;">${s.name} <span style="color:var(--text3);font-size:11px;">(${COP[s.apparatus]?.name||s.apparatus})</span></span><span style="font-size:11px;color:var(--text3);">${s.mastery}%</span></label>`).join('')||'<span style="color:var(--text3);font-size:12px;">技が登録されていません</span>';
   onJDateChange();
   document.getElementById('modal-journal').classList.add('open');
 }
 
-function toggleJApp(a){if(jApparatus.has(a))jApparatus.delete(a);else jApparatus.add(a);document.getElementById('japp-'+a).classList.toggle('selected',jApparatus.has(a));}
+// 種目別ノートの一時保存用
+let jApparatusNoteData={};
+function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');}
+
+function toggleJApp(a){
+  if(jApparatus.has(a))jApparatus.delete(a);else jApparatus.add(a);
+  document.getElementById('japp-'+a).classList.toggle('selected',jApparatus.has(a));
+  renderApparatusNotes();
+}
+
+function renderApparatusNotes(){
+  // 既存DOM から値を退避
+  APPARATUS_M.forEach(a=>{
+    const f=document.getElementById('j-app-focus-'+a);
+    const r=document.getElementById('j-app-review-'+a);
+    const ac=document.getElementById('j-app-action-'+a);
+    if(f)jApparatusNoteData[a]={focus:f.value,review:r?.value||'',action:ac?.value||''};
+  });
+  const container=document.getElementById('j-apparatus-notes');
+  if(jApparatus.size===0){
+    container.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">↑ 上の種目チップを選択するとここに入力欄が表示されます</div>';
+    return;
+  }
+  // 選択された種目の順（APPARATUS_Mの順）で表示
+  const ordered=APPARATUS_M.filter(a=>jApparatus.has(a));
+  container.innerHTML=ordered.map(a=>{
+    const d=jApparatusNoteData[a]||{focus:'',review:'',action:''};
+    const color=APP_COLORS[a]||'#6366f1';
+    const name=COP[a]?.name||a;
+    return `<div style="border-left:3px solid ${color};padding:0 0 4px 12px;margin-bottom:18px;">
+      <div style="font-size:13px;font-weight:700;color:${color};margin-bottom:8px;">${name}</div>
+      <div class="form-group" style="margin-bottom:8px;"><label>意識ポイント</label>
+        <input type="text" id="j-app-focus-${a}" value="${escAttr(d.focus)}" placeholder="例：肘を伸ばした支持を意識する"></div>
+      <div class="form-group" style="margin-bottom:8px;"><label>振り返り</label>
+        <input type="text" id="j-app-review-${a}" value="${escAttr(d.review)}" placeholder="例：3セット中2セット成功。疲れると崩れやすい"></div>
+      <div class="form-group" style="margin-bottom:0;"><label>次のアクション</label>
+        <input type="text" id="j-app-action-${a}" value="${escAttr(d.action)}" placeholder="例：疲労時の練習を意識的に組み込む"></div>
+    </div>`;
+  }).join('');
+}
 function setCondition(v){journalCondition=v;updateCondDots();}
 function setMental(v){journalMental=v;updateMentalDots();}
 function setAchievement(v){journalAchievement=v;updateAchievementDots();}
@@ -2169,25 +2233,38 @@ function saveJournalEntry(){
     const sk=DB.skills.find(s=>s.id===cb.value);
     if(sk){sk.mastery=Math.min(100,(sk.mastery||0)+2);if(!sk.history)sk.history=[];sk.history.push({date,mastery:sk.mastery});checkedSkills.push({id:sk.id,mastery:sk.mastery});}
   });
+  // 種目別ノートをDOMから最終読み取り
+  APPARATUS_M.forEach(a=>{
+    const f=document.getElementById('j-app-focus-'+a);
+    const r=document.getElementById('j-app-review-'+a);
+    const ac=document.getElementById('j-app-action-'+a);
+    if(f)jApparatusNoteData[a]={focus:f.value.trim(),review:r?.value.trim()||'',action:ac?.value.trim()||''};
+  });
+  // 選択中の種目のみ保存
+  const apparatusNotes={};
+  [...jApparatus].forEach(a=>{if(jApparatusNoteData[a])apparatusNotes[a]=jApparatusNoteData[a];});
+
+  const g=id=>document.getElementById(id)?.value.trim()||'';
   const entry={
     id:editId||Date.now().toString(), date,
     duration:+document.getElementById('j-duration').value||0,
     apparatus:[...jApparatus], condition:journalCondition, mental:journalMental,
     achievement:journalAchievement,
-    theme:document.getElementById('j-theme').value.trim(),
-    focusPoints:document.getElementById('j-focus').value.trim(),
-    constraints:document.getElementById('j-constraints').value.trim(),
+    theme:g('j-theme'),
+    overallFocus:g('j-overall-focus'),
+    overallReview:g('j-overall-review'),
+    overallAction:g('j-overall-action'),
+    warmupFocus:g('j-warmup-focus'),
+    warmupReview:g('j-warmup-review'),
+    apparatusNotes,
+    constraints:g('j-constraints'),
     consultAnswers:{
-      weeksToComp:document.getElementById('j-c1').value.trim(),
-      canDo:document.getElementById('j-c2').value.trim(),
-      priority:document.getElementById('j-c3').value.trim(),
-      sensation:document.getElementById('j-c4').value.trim(),
+      weeksToComp:g('j-c1'),
+      canDo:g('j-c2'),
+      priority:g('j-c3'),
+      sensation:g('j-c4'),
     },
-    goodPoints:document.getElementById('j-good').value.trim(),
-    issues:document.getElementById('j-issues').value.trim(),
-    whyAnalysis:document.getElementById('j-why').value.trim(),
-    nextAction:document.getElementById('j-next').value.trim(),
-    notes:document.getElementById('j-notes').value.trim(),
+    notes:g('j-notes'),
     skills:checkedSkills
   };
   if(editId){DB.journal=DB.journal.map(j=>j.id===editId?entry:j);}
@@ -2221,6 +2298,20 @@ function renderJournalList(){
     const stars=j.achievement?'★'.repeat(j.achievement)+'☆'.repeat(5-j.achievement):'';
     const condColor=j.condition<=2?'var(--red)':j.condition===3?'var(--yellow)':'var(--green)';
     const appBadges=(j.apparatus||[]).map(a=>`<span class="badge badge-blue">${COP[a]?.name||a}</span>`).join('');
+    // 種目別ノートのサマリー
+    const appNotes=j.apparatusNotes||{};
+    const appNoteHtml=Object.entries(appNotes).filter(([a,n])=>n.review||n.action).map(([a,n])=>{
+      const color=APP_COLORS[a]||'#6366f1';
+      const name=COP[a]?.name||a;
+      return `<div style="display:flex;gap:6px;align-items:baseline;font-size:12px;margin-top:4px;">
+        <span style="color:${color};font-weight:700;white-space:nowrap;">${name}</span>
+        <span style="color:var(--text2);">${n.review||''}${n.action?`　▶ ${n.action}`:''}</span>
+      </div>`;
+    }).join('');
+    // 後方互換（旧フィールド）
+    const overallReview=j.overallReview||j.goodPoints||'';
+    const overallAction=j.overallAction||j.nextAction||'';
+    const overallFocus=j.overallFocus||j.focusPoints||'';
     return `<div class="jlog-card">
       <div class="jlog-header">
         <span class="jlog-date">${j.date}</span>
@@ -2236,12 +2327,10 @@ function renderJournalList(){
       </div>
       ${j.constraints?`<div style="font-size:11px;color:var(--yellow);margin-bottom:4px;">⚠️ 制約: ${j.constraints}</div>`:''}
       <div class="jlog-theme">${j.theme||'(テーマなし)'}</div>
-      ${j.focusPoints?`<div style="font-size:12px;color:var(--text2);margin-top:4px;white-space:pre-wrap;">${j.focusPoints}</div>`:''}
-      ${j.goodPoints||j.issues?`<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
-        ${j.goodPoints?`<div style="flex:1;min-width:120px;font-size:12px;"><span style="color:var(--green);font-weight:700;">✓ </span>${j.goodPoints}</div>`:''}
-        ${j.issues?`<div style="flex:1;min-width:120px;font-size:12px;"><span style="color:var(--red);font-weight:700;">△ </span>${j.issues}</div>`:''}
-      </div>`:''}
-      ${j.nextAction?`<div class="jlog-next">▶ 次回: ${j.nextAction}</div>`:''}
+      ${overallFocus?`<div style="font-size:12px;color:var(--accent2);margin-top:3px;">👁 ${overallFocus}</div>`:''}
+      ${overallReview?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">💬 ${overallReview}</div>`:''}
+      ${appNoteHtml?`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${appNoteHtml}</div>`:''}
+      ${overallAction?`<div class="jlog-next">▶ 次回: ${overallAction}</div>`:''}
     </div>`;
   }).join('');
 }
