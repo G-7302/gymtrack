@@ -2894,20 +2894,20 @@ function resultCard(c){
       </div>
       <!-- モバイル縦テーブル（種目 | 目標 | 実得点+差分） -->
       <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-      <table style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;table-layout:auto;">
         <thead>
           <tr style="background:var(--surface2);">
             <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
-            <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);">目標</th>
-            <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;">🏆 実得点</th>
+            <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);width:1px;white-space:nowrap;">目標</th>
+            <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;width:1px;white-space:nowrap;">🏆 実得点</th>
           </tr>
         </thead>
         <tbody>${vertResRows}</tbody>
         <tfoot>
           <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
             <td style="padding:8px 8px;font-size:12px;font-weight:700;color:#818cf8;border-right:1px solid var(--border);">合計</td>
-            <td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
-            <td style="padding:8px 10px;text-align:right;">
+            <td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);width:1px;white-space:nowrap;">${totalTarget.toFixed(3)}</td>
+            <td style="padding:8px 10px;text-align:right;width:1px;white-space:nowrap;">
               <span style="font-size:17px;font-weight:800;color:${totalDiff>=0?'#22c55e':'#f87171'};">${totalResult.toFixed(3)}</span><br>
               <span style="font-size:11px;color:${totalDiff>=0?'#22c55e':'#f87171'};">${(totalDiff>=0?'+':'')+totalDiff.toFixed(3)}</span>
             </td>
@@ -3042,7 +3042,7 @@ function planCard(c,todayStr){
           </span>
           <span style="font-size:10px;color:var(--text3);display:block;margin-top:1px;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</span>
         </td>
-        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);">${s.score.toFixed(3)}</td>
+        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);width:1px;white-space:nowrap;">${s.score.toFixed(3)}</td>
       </tr>`;
     }).join('');
     routineScoreHtml=`
@@ -3092,18 +3092,18 @@ function planCard(c,todayStr){
       </div>
       <!-- モバイル縦テーブル（2列シンプル） -->
       <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-      <table style="width:100%;border-collapse:collapse;">
+      <table style="width:100%;border-collapse:collapse;table-layout:auto;">
         <thead>
           <tr style="background:var(--surface2);">
             <th style="padding:5px 10px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
-            <th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;">目標得点</th>
+            <th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;width:1px;white-space:nowrap;">目標得点</th>
           </tr>
         </thead>
         <tbody>${_vertRows}</tbody>
         <tfoot>
           <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
             <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#818cf8;border-right:1px solid var(--border);">合計</td>
-            <td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;">${totalScore.toFixed(3)}</td>
+            <td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;width:1px;white-space:nowrap;">${totalScore.toFixed(3)}</td>
           </tr>
         </tfoot>
       </table>
@@ -3460,7 +3460,7 @@ function renderTotalTable(r){
           </span>
           ${sub}
         </td>
-        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);">${t.score.toFixed(3)}</td>
+        <td style="padding:7px 12px;text-align:right;font-size:15px;font-weight:800;color:var(--text1);width:1px;white-space:nowrap;">${t.score.toFixed(3)}</td>
       </tr>`;
     } else {
       // 結果あり：3列
@@ -3474,8 +3474,8 @@ function renderTotalTable(r){
           </span>
           ${sub}
         </td>
-        <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:600;color:var(--text3);border-right:1px solid var(--border);">${t.score.toFixed(3)}</td>
-        <td style="padding:6px 10px;text-align:right;">
+        <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:600;color:var(--text3);border-right:1px solid var(--border);width:1px;white-space:nowrap;">${t.score.toFixed(3)}</td>
+        <td style="padding:6px 10px;text-align:right;width:1px;white-space:nowrap;">
           <span style="font-size:15px;font-weight:800;color:${dc};">${rv.score.toFixed(3)}</span><br>
           <span style="font-size:10px;color:${dc};">${(diff>=0?'+':'')+diff.toFixed(3)}</span>
         </td>
@@ -3532,14 +3532,14 @@ function renderTotalTable(r){
 
     <!-- モバイル縦テーブル -->
     <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-    <table style="width:100%;border-collapse:collapse;">
+    <table style="width:100%;border-collapse:collapse;table-layout:auto;">
       <thead>
         <tr style="background:var(--surface2);">
           <th style="padding:5px 10px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
           ${results
-            ? `<th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);">目標</th>
-               <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;">🏆 実得点</th>`
-            : `<th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;">目標得点</th>`
+            ? `<th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:right;border-right:1px solid var(--border);width:1px;white-space:nowrap;">目標</th>
+               <th style="padding:5px 10px;font-size:10px;color:#f87171;font-weight:700;text-align:right;width:1px;white-space:nowrap;">🏆 実得点</th>`
+            : `<th style="padding:5px 12px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;width:1px;white-space:nowrap;">目標得点</th>`
           }
         </tr>
       </thead>
@@ -3548,12 +3548,12 @@ function renderTotalTable(r){
         <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
           <td style="padding:8px 10px;font-size:12px;font-weight:700;color:#818cf8;border-right:${results?'1px solid var(--border)':'none'};">合計</td>
           ${results
-            ? `<td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
-               <td style="padding:8px 10px;text-align:right;">
+            ? `<td style="padding:8px 8px;text-align:right;font-size:14px;font-weight:700;color:var(--text3);border-right:1px solid var(--border);width:1px;white-space:nowrap;">${totalTarget.toFixed(3)}</td>
+               <td style="padding:8px 10px;text-align:right;width:1px;white-space:nowrap;">
                  <span style="font-size:17px;font-weight:800;color:${vertTotalDiff>=0?'#22c55e':'#f87171'};">${totalResult.toFixed(3)}</span><br>
                  <span style="font-size:11px;color:${vertTotalDiff>=0?'#22c55e':'#f87171'};">${(vertTotalDiff>=0?'+':'')+vertTotalDiff.toFixed(3)}</span>
                </td>`
-            : `<td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;">${totalTarget.toFixed(3)}</td>`
+            : `<td style="padding:8px 12px;text-align:right;font-size:17px;font-weight:800;color:#818cf8;width:1px;white-space:nowrap;">${totalTarget.toFixed(3)}</td>`
           }
         </tr>
       </tfoot>
