@@ -219,6 +219,8 @@ canvas{max-height:240px}
 
 /* Score summary card */
 .score-summary-card{background:linear-gradient(135deg,rgba(99,102,241,.15),rgba(34,197,94,.1));border:1px solid var(--accent);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.score-horiz { display: block; }
+.score-vert  { display: none; }
 
 /* Journal tabs */
 .journal-tab-btn{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;border-radius:calc(var(--radius) - 4px);transition:all .15s;font-family:inherit}
@@ -461,6 +463,21 @@ canvas{max-height:240px}
   /* 演技構成表 */
   .routine-grid { grid-template-columns: 1fr !important; }
   .routine-grid-3 { grid-template-columns: 1fr !important; }
+
+  /* スコアサマリー：横テーブルを隠して縦テーブルを表示 */
+  .score-horiz { display: none !important; }
+  .score-vert  { display: block !important; }
+
+  /* テキストエリアタッチリサイズ */
+  .ta-wrap { position: relative; }
+  .ta-touch-handle {
+    position: absolute; bottom: 3px; right: 3px;
+    width: 22px; height: 22px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: 4px; display: flex; align-items: center; justify-content: center;
+    font-size: 12px; color: var(--text3); touch-action: none; cursor: ns-resize;
+    user-select: none; -webkit-user-select: none;
+  }
 }
 </style>
 </head>
@@ -2155,6 +2172,7 @@ function openJournalModal(editId){
   document.getElementById('j-skill-checkboxes').innerHTML=DB.skills.map(s=>`<label style="display:flex;align-items:center;gap:8px;margin-bottom:6px;cursor:pointer;"><input type="checkbox" value="${s.id}" style="width:auto;"><span style="flex:1;">${s.name} <span style="color:var(--text3);font-size:11px;">(${COP[s.apparatus]?.name||s.apparatus})</span></span><span style="font-size:11px;color:var(--text3);">${s.mastery}%</span></label>`).join('')||'<span style="color:var(--text3);font-size:12px;">技が登録されていません</span>';
   onJDateChange();
   document.getElementById('modal-journal').classList.add('open');
+  setTimeout(setupTouchResize,100);
 }
 
 // 種目別ノートの一時保存用
@@ -2754,6 +2772,7 @@ function openCompModal(editId){
     document.getElementById('cp-main-goal').checked=false;
   }
   document.getElementById('modal-comp').classList.add('open');
+  setTimeout(setupTouchResize,100);
 }
 function saveComp(){
   const name=document.getElementById('cp-name').value.trim(),date=document.getElementById('cp-date').value;
@@ -2967,6 +2986,20 @@ function planCard(c,todayStr){
     const dRow=scores.map(s=>_sc(s.dScore.toFixed(1),'#818cf8',10,false)).join('');
     const eRow=scores.map(s=>_sc(s.eScore.toFixed(3),'var(--text2)',10,false)).join('');
     const sbRow=scores.map(s=>_sc(s.sb>0?'+'+s.sb.toFixed(1):'—','#34d399',10,false)).join('');
+    // モバイル縦テーブル用行
+    const _vertRows=scores.map(s=>{
+      const color=APP_COLORS[s.app]||'#6366f1';
+      return `<tr style="border-bottom:1px solid var(--border)22;">
+        <td style="padding:5px 8px;border-right:1px solid var(--border);">
+          <span style="display:inline-block;width:7px;height:7px;border-radius:50%;background:${color};margin-right:4px;"></span>
+          <span style="font-size:12px;font-weight:700;color:${color};">${COP[s.app].name}</span>
+        </td>
+        <td style="padding:5px 5px;text-align:center;font-size:11px;color:#818cf8;">${s.dScore.toFixed(1)}</td>
+        <td style="padding:5px 5px;text-align:center;font-size:11px;color:var(--text2);">${s.eScore.toFixed(1)}</td>
+        <td style="padding:5px 5px;text-align:center;font-size:11px;color:#34d399;">${s.sb>0?'+'+s.sb.toFixed(1):'—'}</td>
+        <td style="padding:5px 8px;text-align:right;font-size:13px;font-weight:800;color:var(--text1);border-left:1px solid var(--border);">${s.score.toFixed(3)}</td>
+      </tr>`;
+    }).join('');
     routineScoreHtml=`
     <div style="margin-bottom:12px;">
       <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
@@ -2974,7 +3007,8 @@ function planCard(c,todayStr){
         <span style="font-size:12px;">${linkedRoutine.name}</span>
         <button class="btn btn-ghost" style="padding:1px 6px;font-size:10px;margin-left:auto;" onclick="openRoutineById('${linkedRoutine.id}')">開く →</button>
       </div>
-      <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+      <!-- PC横テーブル -->
+      <div class="score-horiz" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
       <table style="width:100%;border-collapse:collapse;min-width:400px;">
         <thead>
           <tr>
@@ -3009,6 +3043,27 @@ function planCard(c,todayStr){
             ${_tc(totalSB>0?'+'+totalSB.toFixed(1):'—','#34d399',10)}
           </tr>
         </tbody>
+      </table>
+      </div>
+      <!-- モバイル縦テーブル -->
+      <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+      <table style="width:100%;border-collapse:collapse;">
+        <thead>
+          <tr style="background:var(--surface2);">
+            <th style="padding:4px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
+            <th style="padding:4px 5px;font-size:10px;color:#818cf8;text-align:center;">D</th>
+            <th style="padding:4px 5px;font-size:10px;color:var(--text2);text-align:center;">E</th>
+            <th style="padding:4px 5px;font-size:10px;color:#34d399;text-align:center;">SB</th>
+            <th style="padding:4px 8px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;border-left:1px solid var(--border);">目標</th>
+          </tr>
+        </thead>
+        <tbody>${_vertRows}</tbody>
+        <tfoot>
+          <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
+            <td colspan="4" style="padding:6px 8px;font-size:12px;font-weight:700;color:#818cf8;">合計</td>
+            <td style="padding:6px 8px;text-align:right;font-size:14px;font-weight:800;color:#818cf8;border-left:1px solid var(--border);">${totalScore.toFixed(3)}</td>
+          </tr>
+        </tfoot>
       </table>
       </div>
     </div>`;
@@ -3106,9 +3161,10 @@ function renderRoutinePage(){
       <button class="btn btn-ghost btn-sm" onclick="renameRoutineDialog()" title="タイトル・日付を変更" style="font-size:12px;padding:2px 6px;">✏️</button>
     </div>
     <div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:2px;">${r.date}</div>`;
-  document.getElementById('routine-grid-top').innerHTML=renderAppCard('FX',r)+renderAppCard('VT',r);
-  document.getElementById('routine-grid-mid').innerHTML=renderAppCard('PH',r)+renderAppCard('PB',r);
-  document.getElementById('routine-grid-bot').innerHTML=renderAppCard('SR',r)+renderAppCard('HB',r);
+  // 公式順: ゆか→あん馬→つり輪→跳馬→平行棒→鉄棒
+  document.getElementById('routine-grid-top').innerHTML=renderAppCard('FX',r)+renderAppCard('PH',r);
+  document.getElementById('routine-grid-mid').innerHTML=renderAppCard('SR',r)+renderAppCard('VT',r);
+  document.getElementById('routine-grid-bot').innerHTML=renderAppCard('PB',r)+renderAppCard('HB',r);
   renderTotalTable(r);
 }
 
@@ -3344,12 +3400,34 @@ function renderTotalTable(r){
       ${res?.note?`<tr><td colspan="${apps.length+2}" style="padding:6px 10px;font-size:11px;color:var(--text2);border-top:1px solid var(--border);font-style:italic;">📝 ${res.note}</td></tr>`:''}`;
   }
 
+  // ── 縦テーブル（モバイル用）──
+  const vertRows=apps.map((a,i)=>{
+    const t=targets[i];
+    const rv=results?results[i]:null;
+    const color=APP_COLORS[a]||'#6366f1';
+    const diff=rv?(rv.score-t.score):null;
+    return `<tr style="border-bottom:1px solid var(--border)22;">
+      <td style="padding:6px 8px;border-right:1px solid var(--border);">
+        <span style="display:inline-block;width:8px;height:8px;border-radius:50%;background:${color};margin-right:5px;"></span>
+        <span style="font-size:12px;font-weight:700;color:${color};">${COP[a].name}</span>
+      </td>
+      <td style="padding:6px 6px;text-align:center;font-size:11px;color:#818cf8;">${t.dScore.toFixed(1)}</td>
+      <td style="padding:6px 6px;text-align:center;font-size:11px;color:var(--text2);">${t.eScore.toFixed(1)}</td>
+      <td style="padding:6px 6px;text-align:center;font-size:11px;color:#34d399;">${t.sb>0?'+'+t.sb.toFixed(1):'—'}</td>
+      <td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:800;color:var(--text1);border-left:1px solid var(--border);">${t.score.toFixed(3)}</td>
+      ${rv!=null?`<td style="padding:6px 8px;text-align:right;font-size:13px;font-weight:800;color:${diff>=0?'#22c55e':'#f87171'};border-left:1px solid var(--border);">${rv.score.toFixed(3)}<br><span style="font-size:10px;font-weight:400;">${(diff>=0?'+':'')+diff.toFixed(3)}</span></td>`:''}
+    </tr>`;
+  }).join('');
+  const vertResultHeader=results?`<th style="padding:4px 8px;text-align:right;font-size:10px;color:#f87171;border-left:1px solid var(--border);">🏆実得点</th>`:'';
+
   document.getElementById('routine-total-section').innerHTML=`
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
       <span style="font-size:12px;font-weight:700;color:var(--text2);">📊 スコアサマリー</span>
       <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openResultModal()">🏆 結果を記入</button>
     </div>
-    <div style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+
+    <!-- PC横テーブル -->
+    <div class="score-horiz" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
     <table style="width:100%;border-collapse:collapse;min-width:500px;">
       <thead>
         <tr>
@@ -3385,6 +3463,30 @@ function renderTotalTable(r){
           ${totalCell(totalTargetSB>0?'+'+totalTargetSB.toFixed(1):'—','#34d399',11)}
         </tr>
       </tbody>
+    </table>
+    </div>
+
+    <!-- モバイル縦テーブル -->
+    <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
+    <table style="width:100%;border-collapse:collapse;">
+      <thead>
+        <tr style="background:var(--surface2);">
+          <th style="padding:5px 8px;font-size:10px;color:var(--text3);text-align:left;border-right:1px solid var(--border);">種目</th>
+          <th style="padding:5px 6px;font-size:10px;color:#818cf8;text-align:center;">D</th>
+          <th style="padding:5px 6px;font-size:10px;color:var(--text2);text-align:center;">E</th>
+          <th style="padding:5px 6px;font-size:10px;color:#34d399;text-align:center;">SB</th>
+          <th style="padding:5px 8px;font-size:10px;color:#818cf8;font-weight:700;text-align:right;border-left:1px solid var(--border);">目標</th>
+          ${vertResultHeader}
+        </tr>
+      </thead>
+      <tbody>${vertRows}</tbody>
+      <tfoot>
+        <tr style="background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
+          <td colspan="4" style="padding:7px 8px;font-size:12px;font-weight:700;color:#818cf8;">合計</td>
+          <td style="padding:7px 8px;text-align:right;font-size:15px;font-weight:800;color:#818cf8;border-left:1px solid var(--border);">${totalTarget.toFixed(3)}</td>
+          ${results?`<td style="padding:7px 8px;text-align:right;font-size:15px;font-weight:800;color:${(totalResult-totalTarget)>=0?'#22c55e':'#f87171'};border-left:1px solid var(--border);">${totalResult.toFixed(3)}</td>`:''}
+        </tr>
+      </tfoot>
     </table>
     </div>`;
 }
@@ -3489,6 +3591,38 @@ function dndDrop(app,toIdx,e){
 function dndEnd(){
   document.querySelectorAll('.drag-ghost,.drag-target').forEach(r=>{r.classList.remove('drag-ghost');r.classList.remove('drag-target');});
   _dnd={app:null,from:null};
+}
+// ---- TEXTAREA TOUCH RESIZE (スマホ右下ドラッグでリサイズ) ----
+function setupTouchResize(){
+  if(window.innerWidth>768)return;
+  document.querySelectorAll('.modal textarea').forEach(ta=>{
+    if(ta.dataset.trSetup)return;
+    ta.dataset.trSetup='1';
+    ta.style.resize='none';
+    // wrapperで包む
+    const wrap=document.createElement('div');
+    wrap.className='ta-wrap';
+    ta.parentNode.insertBefore(wrap,ta);
+    wrap.appendChild(ta);
+    // ハンドル追加
+    const handle=document.createElement('div');
+    handle.className='ta-touch-handle';
+    handle.innerHTML='↕';
+    wrap.appendChild(handle);
+    handle.addEventListener('touchstart',e=>{
+      e.preventDefault();e.stopPropagation();
+      const startY=e.touches[0].clientY;
+      const startH=ta.offsetHeight;
+      function onMove(ev){
+        ev.preventDefault();
+        const h=Math.max(44,Math.min(500,startH+(ev.touches[0].clientY-startY)));
+        ta.style.height=h+'px';
+      }
+      function onEnd(){document.removeEventListener('touchmove',onMove);document.removeEventListener('touchend',onEnd);}
+      document.addEventListener('touchmove',onMove,{passive:false});
+      document.addEventListener('touchend',onEnd);
+    },{passive:false});
+  });
 }
 // ---- TOUCH DRAG AND DROP (スマホ長押しドラッグ) ----
 let _tnd={app:null,from:null,active:false,timer:null,ghostEl:null};
