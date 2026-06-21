@@ -1687,7 +1687,7 @@ function sc(icon,title,val,sub){return `<div class="card stat"><div class="card-
 // ---- SHARED CALENDAR ----
 const EV_COLORS={'slate':'#475569','blue':'#3b82f6','rose':'#f43f5e','green':'#22c55e','orange':'#f59e0b'};
 
-function buildCalendarHTML(y, m, {onDayClick='openJournalWithDate', onMonClick='calMonClick', titleId=null, compDate=null, collapseCompletedWeeks=false}={}){
+function buildCalendarHTML(y, m, {onDayClick='calDayClick', onMonClick='calMonClick', titleId=null, compDate=null, collapseCompletedWeeks=false}={}){
   const now=new Date();
   const todayStr=localDate(now);
   const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
@@ -1855,7 +1855,7 @@ function buildCountdownCalendarsHTML(comp){
     const isCurrentMonth=(y===nowY&&m===nowM);
     const calHtml=buildCalendarHTML(y,m,{
       compDate:comp.date,
-      onDayClick:'openJournalWithDate',
+      onDayClick:'calDayClick',
       onMonClick:'calMonClick',
       collapseCompletedWeeks:isCurrentMonth
     });
@@ -1969,7 +1969,7 @@ function renderJournalCalendar(){
   if(jCalYear===null){jCalYear=now.getFullYear();jCalMonth=now.getMonth();}
   document.getElementById('jcal-body').innerHTML=buildCalendarHTML(jCalYear,jCalMonth,{
     titleId:'jcal-title',
-    onDayClick:'openJournalWithDate',
+    onDayClick:'calDayClick',
     onMonClick:'calMonClick'
   });
   renderMonthlyReviewList();
@@ -2067,11 +2067,13 @@ function closeMenuPicker(){
   _menuPickerTarget=null;
 }
 function calMonClick(dateStr){
-  // 月曜：週次計画 or 日誌かを選択
-  const existing=DB.journal.find(j=>j.date===dateStr);
-  const wp=(DB.weekPlans||[]).find(w=>w.weekStart===dateStr);
-  if(wp||!existing){
-    // 週次計画を開く（日誌はその後でも可）
+  // 月曜クリック → メニュータイプで分岐（休養→週次計画、練習→日誌）
+  calDayClick(dateStr);
+}
+function calDayClick(dateStr){
+  // 休養日 → 週次計画モーダル、それ以外 → 練習日誌
+  const menuType=getDayMenuForDate(dateStr);
+  if(menuType==='休養'){
     openWeekPlanModal(dateStr);
   } else {
     openJournalWithDate(dateStr);
