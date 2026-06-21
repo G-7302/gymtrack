@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192">
+  <!-- 背景 -->
+  <rect width="192" height="192" rx="36" fill="#6366f1"/>
+  <!-- 頭 -->
+  <circle cx="96" cy="46" r="16" fill="white"/>
+  <!-- 体幹 -->
+  <line x1="96" y1="62" x2="96" y2="118" stroke="white" stroke-width="9" stroke-linecap="round"/>
+  <!-- 腕（水平展開） -->
+  <line x1="52" y1="88" x2="140" y2="88" stroke="white" stroke-width="9" stroke-linecap="round"/>
+  <!-- 左脚 -->
+  <line x1="96" y1="118" x2="66" y2="158" stroke="white" stroke-width="9" stroke-linecap="round"/>
+  <!-- 右脚 -->
+  <line x1="96" y1="118" x2="126" y2="158" stroke="white" stroke-width="9" stroke-linecap="round"/>
+</svg>
