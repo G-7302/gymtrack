@@ -1459,10 +1459,17 @@ function startFirebaseSync(){
   }).catch(()=>setSyncStatus('offline'));
 }
 
+// ---- DATE UTILS ----
+// toISOString()はUTC基準のため日本時間(UTC+9)では深夜0〜9時に「昨日」になるバグを防ぐ
+function localDate(d){
+  d=d||new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+
 // ---- COMPETITION & PHASE UTILS ----
 // 直近の未来の試合を返す
 function getNextComp(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=localDate();
   return [...(DB.competitions||[])].sort((a,b)=>a.date.localeCompare(b.date)).find(c=>c.date>=today)||null;
 }
 // 試合日までの残り日数
@@ -1555,7 +1562,7 @@ function goto(page){
 
 // ---- DASHBOARD ----
 function renderDashboard(){
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localDate();
   const today=new Date(); today.setHours(0,0,0,0);
   const m=today.getMonth(),y=today.getFullYear();
   const monthJ=DB.journal.filter(j=>{const d=new Date(j.date);return d.getMonth()===m&&d.getFullYear()===y;});
@@ -1696,7 +1703,7 @@ const EV_COLORS={'slate':'#475569','blue':'#3b82f6','rose':'#f43f5e','green':'#2
 
 function buildCalendarHTML(y, m, {onDayClick='openJournalWithDate', onMonClick='calMonClick', titleId=null, compDate=null, collapseCompletedWeeks=false}={}){
   const now=new Date();
-  const todayStr=now.toISOString().slice(0,10);
+  const todayStr=localDate(now);
   const monthNames=['1月','2月','3月','4月','5月','6月','7月','8月','9月','10月','11月','12月'];
   if(titleId)document.getElementById(titleId).textContent=`📅 ${y}年${monthNames[m]}`;
 
@@ -1723,7 +1730,7 @@ function buildCalendarHTML(y, m, {onDayClick='openJournalWithDate', onMonClick='
           const dow=new Date(ds+'T00:00:00').getDay();
           const monD=new Date(ds+'T00:00:00');
           monD.setDate(monD.getDate()-((dow+6)%7));
-          monDs=monD.toISOString().slice(0,10);
+          monDs=localDate(monD);
           break;
         }
       }
@@ -2044,7 +2051,7 @@ function openEventModal(id){
   const ev=id?(DB.events||[]).find(e=>e.id===id):null;
   document.getElementById('ev-id').value=id||'';
   document.getElementById('ev-title').value=ev?.title||'';
-  document.getElementById('ev-date').value=ev?.date||new Date().toISOString().slice(0,10);
+  document.getElementById('ev-date').value=ev?.date||localDate();
   document.getElementById('ev-note').value=ev?.note||'';
   _evColor=ev?.color||'slate';
   document.querySelectorAll('.ev-color-chip').forEach(el=>el.classList.toggle('active',el.dataset.color===_evColor));
@@ -2094,11 +2101,11 @@ function getWeekStart(dateStr){
   const day=d.getDay(); // 0=日
   const diff=day===0?-6:1-day;
   d.setDate(d.getDate()+diff);
-  return d.toISOString().slice(0,10);
+  return localDate(d);
 }
 // 今週の計画を取得
 function getCurrentWeekPlan(dateStr){
-  const ws=getWeekStart(dateStr||new Date().toISOString().slice(0,10));
+  const ws=getWeekStart(dateStr||localDate());
   return (DB.weekPlans||[]).find(w=>w.weekStart===ws)||null;
 }
 
@@ -2150,7 +2157,7 @@ function onJDateChange(){
 }
 
 function openJournalWithDate(dateStr){
-  if(dateStr==='__today__')dateStr=new Date().toISOString().slice(0,10);
+  if(dateStr==='__today__')dateStr=localDate();
   // カレンダー/ストリップからその日の日誌を開く（既存ならedit, なければ新規でその日付をセット）
   const existing=DB.journal.find(j=>j.date===dateStr);
   if(existing){openJournalModal(existing.id);}
@@ -2165,7 +2172,7 @@ function openJournalWithDate(dateStr){
 function openJournalModal(editId){
   jApparatus=new Set(); journalCondition=0; journalMental=0; journalAchievement=0;
   jApparatusNoteData={};
-  const today=new Date().toISOString().slice(0,10);
+  const today=localDate();
 
   // フォームリセット
   ['j-theme','j-overall-focus','j-overall-review','j-overall-action',
@@ -2336,7 +2343,7 @@ function saveJournalEntry(){
 
 function renderJournalList(){
   // 週バナー表示
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localDate();
   const wp=getCurrentWeekPlan(todayStr);
   const banner=document.getElementById('journal-week-banner');
   if(wp&&(wp.priority1||wp.phase)){
@@ -2398,7 +2405,7 @@ function deleteJournal(id){if(!confirm('削除しますか？'))return;DB.journa
 
 // ---- WEEK PLAN ----
 function openWeekPlanModal(weekStart, prefillNote){
-  const ws=weekStart||getWeekStart(new Date().toISOString().slice(0,10));
+  const ws=weekStart||getWeekStart(localDate());
   const wp=(DB.weekPlans||[]).find(w=>w.weekStart===ws)||{};
   document.getElementById('wp-week-start').value=ws;
 
@@ -2443,7 +2450,7 @@ function openWeekPlanModal(weekStart, prefillNote){
 function getPrevWeekStart(wsStr){
   const d=new Date(wsStr+'T00:00:00');
   d.setDate(d.getDate()-7);
-  return d.toISOString().slice(0,10);
+  return localDate(d);
 }
 
 function wpSetRest(day){
@@ -2496,7 +2503,7 @@ function saveWeekPlan(){
 function renderWeekPlanView(){
   const el=document.getElementById('week-plan-view');
   const plans=[...(DB.weekPlans||[])].sort((a,b)=>b.weekStart.localeCompare(a.weekStart));
-  const todayStr=new Date().toISOString().slice(0,10);
+  const todayStr=localDate();
   const thisWS=getWeekStart(todayStr);
   let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
     <button class="btn btn-primary" onclick="openWeekPlanModal()">＋ 今週の計画を入れる</button>
@@ -2835,7 +2842,7 @@ function isCompPast(c){
   return d<today;
 }
 function renderPlanList(){
-  const today=new Date().toISOString().slice(0,10);
+  const today=localDate();
   const sorted=[...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date));
   const active=sorted.filter(c=>!isCompPast(c));
   if(!active.length){document.getElementById('plan-list').innerHTML='<div class="card"><div class="empty"><div class="icon">🎯</div><p>試合を追加してください</p></div></div>';return;}
@@ -3025,7 +3032,7 @@ function calcRoutineScoreTable(r){
 }
 
 function planCard(c,todayStr){
-  const today=todayStr||new Date().toISOString().slice(0,10);
+  const today=todayStr||localDate();
   const days=daysUntil(c.date);
   const practiceLeft=practiceDaysUntil(c.date);
   const isPast=days<0;
@@ -3223,7 +3230,7 @@ function emptyRoutineApparatus(){
   return {elements:[],eTarget:8.5,nd:0,sb:0};
 }
 function newRoutine(name,date){
-  return {id:Date.now().toString(),name:name||'新しい構成',date:date||new Date().toISOString().slice(0,10),FX:emptyRoutineApparatus(),PH:emptyRoutineApparatus(),SR:emptyRoutineApparatus(),VT:{vault1:null,vault2:null,eTarget:9.0,nd:0,sb:0},PB:emptyRoutineApparatus(),HB:emptyRoutineApparatus()};
+  return {id:Date.now().toString(),name:name||'新しい構成',date:date||localDate(),FX:emptyRoutineApparatus(),PH:emptyRoutineApparatus(),SR:emptyRoutineApparatus(),VT:{vault1:null,vault2:null,eTarget:9.0,nd:0,sb:0},PB:emptyRoutineApparatus(),HB:emptyRoutineApparatus()};
 }
 function currentRoutine(){return DB.routines.find(r=>r.id===currentRoutineId)||null;}
 
@@ -3252,7 +3259,7 @@ function switchRoutine(){setCurrentRoutineId(document.getElementById('routine-se
 
 function newRoutineDialog(){
   const name=prompt('構成表の名前を入力（例: 2026.7.20 ブロック）:','');if(!name)return;
-  const date=prompt('日付（例: 2026-07-20）:',new Date().toISOString().slice(0,10));
+  const date=prompt('日付（例: 2026-07-20）:',localDate());
   const r=newRoutine(name,date);DB.routines.push(r);setCurrentRoutineId(r.id);saveDB();renderRoutinePage();
 }
 function deleteCurrentRoutine(){
@@ -4079,7 +4086,7 @@ function renderAnalysis(){
   const l14=[...DB.journal].sort((a,b)=>a.date.localeCompare(b.date)).slice(-14);
   rc('chart-condition','line',l14.map(j=>j.date.slice(5)),[{label:'体調',data:l14.map(j=>j.condition||0),borderColor:'#22c55e',backgroundColor:'rgba(34,197,94,.1)',fill:true,tension:.3}]);
   const wData=[];
-  for(let w=7;w>=0;w--){const ws=new Date(now);ws.setDate(now.getDate()-w*7-6);const we=new Date(now);we.setDate(now.getDate()-w*7);const wss=ws.toISOString().slice(0,10),wes=we.toISOString().slice(0,10);wData.push({label:`-${w}w`,mins:DB.journal.filter(j=>j.date>=wss&&j.date<=wes).reduce((a,j)=>a+(+j.duration||0),0)});}
+  for(let w=7;w>=0;w--){const ws=new Date(now);ws.setDate(now.getDate()-w*7-6);const we=new Date(now);we.setDate(now.getDate()-w*7);const wss=localDate(ws),wes=localDate(we);wData.push({label:`-${w}w`,mins:DB.journal.filter(j=>j.date>=wss&&j.date<=wes).reduce((a,j)=>a+(+j.duration||0),0)});}
   rc('chart-duration','bar',wData.map(w=>w.label),[{label:'分',data:wData.map(w=>w.mins),backgroundColor:'rgba(99,102,241,.5)',borderColor:'#6366f1',borderWidth:1}]);
   rc('chart-mental','line',l14.map(j=>j.date.slice(5)),[{label:'メンタル',data:l14.map(j=>j.mental||0),borderColor:'#818cf8',backgroundColor:'rgba(129,140,248,.1)',fill:true,tension:.3}]);
   const sh=DB.skills.filter(s=>s.history&&s.history.length>1).sort((a,b)=>b.history.length-a.history.length).slice(0,3);
@@ -4134,7 +4141,7 @@ function resetDayMenuSettings(){
   saveDB();
   renderDayMenuGrid();
 }
-function exportData(){const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='gymtrack_'+new Date().toISOString().slice(0,10)+'.json';a.click();}
+function exportData(){const b=new Blob([JSON.stringify(DB,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='gymtrack_'+localDate()+'.json';a.click();}
 function handleImport(e){const f=e.target.files[0];if(!f)return;const r=new FileReader();r.onload=ev=>{try{DB={...DB,...JSON.parse(ev.target.result)};saveDB();alert('✅ インポート完了');renderDashboard();}catch(err){alert('読込失敗');}};r.readAsText(f);}
 function clearData(){if(!confirm('全データを削除します。よろしいですか？'))return;localStorage.removeItem('gymtrack_v2');location.reload();}
 function closeModal(id){document.getElementById(id).classList.remove('open');}
