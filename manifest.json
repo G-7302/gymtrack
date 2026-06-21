@@ -1,0 +1,19 @@
+{
+  "name": "GymTrack 体操競技練習管理",
+  "short_name": "GymTrack",
+  "description": "体操競技の練習・演技構成・試合を一元管理するアプリ",
+  "start_url": "/gymtrack/",
+  "scope": "/gymtrack/",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#0f1117",
+  "theme_color": "#6366f1",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
