@@ -4125,6 +4125,26 @@ function init(){
   goto(PAGES.includes(lastPage)?lastPage:'dashboard');
   // Firebase同期開始（ローカル表示後に非同期で実行）
   setTimeout(startFirebaseSync, 100);
+
+  // ── 日付変わり検知 ──
+  // 今日の日付を記憶しておき、1分ごとにチェック。変わったら UI を再描画。
+  let _trackedDate = new Date().toISOString().slice(0, 10);
+  setInterval(() => {
+    const nowDate = new Date().toISOString().slice(0, 10);
+    if (nowDate !== _trackedDate) {
+      _trackedDate = nowDate;
+      // ヘッダー日付を更新
+      document.getElementById('today-date').textContent =
+        new Date().toLocaleDateString('ja-JP', {year:'numeric',month:'long',day:'numeric',weekday:'short'});
+      // 現在表示中のページを再描画
+      const cur = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
+      if (cur === 'dashboard') { renderDashboard(); }
+      else if (cur === 'journal') { renderJournalList(); renderJournalCalendar(); }
+      else if (cur === 'plan') { renderPlanList(); }
+      // カレンダー（ダッシュボード）は常に更新
+      renderDashboardCalendar();
+    }
+  }, 60 * 1000); // 1分ごとにチェック
 }
 function toggleMobileSidebar(){
   const sb=document.getElementById('sidebar');
