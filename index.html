@@ -359,6 +359,13 @@ canvas{max-height:240px}
     from { transform: translateX(-100%); }
     to   { transform: translateX(0); }
   }
+  #sidebar.mobile-closing {
+    animation: slideOutLeft .2s ease forwards !important;
+  }
+  @keyframes slideOutLeft {
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100%); }
+  }
 
   /* トップバー */
   .topbar { padding: 10px 14px; gap: 8px; }
@@ -397,6 +404,13 @@ canvas{max-height:240px}
 
   /* グリッドを1カラムに */
   .grid2, .grid3 { grid-template-columns: 1fr !important; }
+
+  /* ダッシュボード上部4カード → 2×2グリッド */
+  .grid4 { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .grid4 .stat { padding: 12px 10px !important; }
+  .grid4 .stat .val { font-size: 22px !important; }
+  .grid4 .stat .lbl { font-size: 10px !important; }
+  .grid4 .stat .sub { font-size: 10px !important; }
 
   /* カード */
   .card { padding: 14px; }
@@ -482,11 +496,6 @@ canvas{max-height:240px}
     <div style="margin-left:auto;font-size:20px;opacity:.6;">＋</div>
   </button>
 
-  <div class="grid2" style="margin-bottom:20px;">
-    <div class="card"><div class="card-title db-nav" onclick="goto('plan')" title="試合逆算計画へ">🎯 直近の試合まで <span class="db-nav-arrow">›</span></div><div id="db-countdown"></div></div>
-    <div class="card"><div class="card-title db-nav" onclick="goto('journal')" title="練習日誌へ">📓 最近の練習 <span class="db-nav-arrow">›</span></div><div id="db-recent-journal"></div></div>
-  </div>
-
   <!-- 月カレンダー -->
   <div class="card" style="margin-bottom:20px;">
     <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
@@ -503,6 +512,11 @@ canvas{max-height:240px}
       <div class="db-cal-legend"><span style="font-size:8px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 4px;font-weight:700;">📋</span>週次計画</div>
     </div>
     <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" title="ドラッグしてカレンダーの高さを調整"></div>
+  </div>
+
+  <div class="grid2" style="margin-bottom:20px;">
+    <div class="card"><div class="card-title db-nav" onclick="goto('plan')" title="試合逆算計画へ">🎯 直近の試合まで <span class="db-nav-arrow">›</span></div><div id="db-countdown"></div></div>
+    <div class="card"><div class="card-title db-nav" onclick="goto('journal')" title="練習日誌へ">📓 最近の練習 <span class="db-nav-arrow">›</span></div><div id="db-recent-journal"></div></div>
   </div>
 
   <div class="card"><div class="card-title db-nav" onclick="goto('skills')" title="新技リストへ">⚡ 間に合わせたい新技 <span class="db-nav-arrow">›</span></div><div id="db-skills-weak"></div></div>
@@ -3742,8 +3756,14 @@ function toggleMobileSidebar(){
   ov.classList.toggle('open', isOpen);
 }
 function closeMobileSidebar(){
-  document.getElementById('sidebar').classList.remove('mobile-open');
-  document.getElementById('mobile-sidebar-overlay').classList.remove('open');
+  const sb=document.getElementById('sidebar');
+  const ov=document.getElementById('mobile-sidebar-overlay');
+  if(!sb.classList.contains('mobile-open')) return;
+  sb.classList.add('mobile-closing');
+  ov.classList.remove('open');
+  setTimeout(()=>{
+    sb.classList.remove('mobile-open','mobile-closing');
+  }, 200);
 }
 // サイドバーのナビリンクをモバイルでタップしたら閉じる
 document.addEventListener('click', e=>{
