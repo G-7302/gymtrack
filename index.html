@@ -1322,9 +1322,10 @@ const DAY_MENU_DEFAULT = {
   6:'価値up'   // 土
 };
 const DAY_MENU_ICON = {
-  '価値up':'🔥','基本練習':'🔬','通し':'🏅','調整':'🧘','休養':'😴'
+  '価値up':'🔥','基本練習':'🔬','通し':'🏅','調整':'🧘','休養':'😴',
+  '公式練習':'🏟️','チェック':'✅','競技':'🏆'
 };
-const MENU_TYPES = ['価値up','基本練習','通し','調整','休養'];
+const MENU_TYPES = ['価値up','基本練習','通し','調整','休養','公式練習','チェック','競技'];
 const DAY_NAMES_JA = ['日','月','火','水','木','金','土'];
 // DB設定があれば優先、なければデフォルト（曜日テンプレート）
 function getDayMenu(){return Object.assign({},DAY_MENU_DEFAULT,DB.settings?.dayMenu||{});}
@@ -1629,37 +1630,22 @@ function renderDashboard(){
     </div>`:''}
   `:'<div class="empty" style="padding:12px;"><div class="icon">🎯</div><p style="font-size:12px;">試合を登録してください</p></div>';
 
-  // ── ワンタッチボタン：メニュータイプで内容を切り替え ──
+  // ── ワンタッチボタン：休養→週次計画 / それ以外→練習記録 ──
   const btn=document.getElementById('db-quick-add');
-  const isMonday=dayOfWeek===1;
-  if(menuType==='休養'&&isMonday){
-    // 月曜休養 → 週次計画
-    document.getElementById('db-quick-menu-label').textContent=`今日は 📋 月曜日（${menuIcon}休養）`;
-    document.getElementById('db-quick-icon').textContent='📋';
-    document.getElementById('db-quick-label').textContent='週次計画を記録する →';
-    btn.onclick=()=>openWeekPlanModal(todayStr);
-    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
-  } else if(menuType==='休養'){
-    // 休養日（月曜以外）
+  const isRest=menuType==='休養';
+  const btnBase='display:flex;align-items:center;gap:12px;width:100%;border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+  if(isRest){
     document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} 休養日`;
-    document.getElementById('db-quick-icon').textContent='😴';
-    document.getElementById('db-quick-label').textContent='休養日を記録する →';
-    btn.onclick=()=>openJournalWithDate('__today__');
-    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--surface2);border:1px solid var(--border);color:var(--text2);border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
-  } else if(isMonday){
-    // 月曜練習日 → 週次計画
-    document.getElementById('db-quick-menu-label').textContent=`今日は 📋 月曜日（${menuIcon}${menuType}）`;
     document.getElementById('db-quick-icon').textContent='📋';
     document.getElementById('db-quick-label').textContent='週次計画を記録する →';
     btn.onclick=()=>openWeekPlanModal(todayStr);
-    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+    btn.style.cssText=btnBase+'background:var(--accent);';
   } else {
-    // 通常練習日
     document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} ${menuType||'練習日'}`;
     document.getElementById('db-quick-icon').textContent='📓';
     document.getElementById('db-quick-label').textContent='今日の練習を記録する →';
     btn.onclick=()=>openJournalWithDate('__today__');
-    btn.style.cssText='display:flex;align-items:center;gap:12px;width:100%;background:var(--accent);border:none;color:#fff;border-radius:var(--radius);padding:14px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:opacity .15s;';
+    btn.style.cssText=btnBase+'background:var(--accent);';
   }
 
   // ── 最近の練習日誌 ──
