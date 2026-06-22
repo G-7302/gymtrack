@@ -872,19 +872,6 @@ canvas{max-height:240px}
     <div class="form-group"><label>今週の最優先課題 ②</label><input type="text" id="wp-p2" placeholder="例：鉄棒の手放し技の離れを早くする"></div>
     <div class="form-group"><label>今週の制約（怪我・疲労・施設など）</label><input type="text" id="wp-constraints" placeholder="例：左手の甲が痛いため手をつく技は制限"></div>
 
-    <div style="font-size:12px;color:var(--text2);margin:12px 0 8px;font-weight:600;">各曜日のメモ（練習できない日は「休み」ボタン）</div>
-    <div class="row">
-      <div class="form-group"><label>🔥 火（価値up）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-tue" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('tue')" title="この日は休み">🚫</button></div></div>
-      <div class="form-group"><label>🔬 水（基本練習）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-wed" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('wed')" title="この日は休み">🚫</button></div></div>
-    </div>
-    <div class="row">
-      <div class="form-group"><label>🏅 木（通し）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-thu" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('thu')" title="この日は休み">🚫</button></div></div>
-      <div class="form-group"><label>🧘 金（調整）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-fri" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('fri')" title="この日は休み">🚫</button></div></div>
-    </div>
-    <div class="row">
-      <div class="form-group"><label>🔥 土（価値up）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-sat" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('sat')" title="この日は休み">🚫</button></div></div>
-      <div class="form-group"><label>🏅 日（通し）</label><div style="display:flex;gap:4px;"><input type="text" id="wp-sun" style="flex:1;"><button class="btn btn-ghost btn-sm" onclick="wpSetRest('sun')" title="この日は休み">🚫</button></div></div>
-    </div>
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-ghost" onclick="closeModal('modal-weekplan')">キャンセル</button>
       <button class="btn btn-primary" onclick="saveWeekPlan()">保存</button>
@@ -2441,8 +2428,6 @@ function openWeekPlanModal(weekStart, prefillNote){
   document.getElementById('wp-p1').value=wp.priority1||'';
   document.getElementById('wp-p2').value=wp.priority2||'';
   document.getElementById('wp-constraints').value=wp.constraints||(prefillNote&&!wp.priority1?prefillNote:'')||'';
-  const dn=wp.dayNotes||{};
-  ['tue','wed','thu','fri','sat','sun'].forEach(d=>document.getElementById('wp-'+d).value=dn[d]||'');
 
   // 前週サマリー生成
   const prevWS=getPrevWeekStart(ws);
@@ -2481,13 +2466,6 @@ function wpSetRest(day){
 
 function wpFillPhase(){
   const phaseKey=document.getElementById('wp-phase').value;
-  const sug=phaseWeekSuggestions(phaseKey);
-  if(sug.tue)document.getElementById('wp-tue').value=sug.tue;
-  if(sug.wed)document.getElementById('wp-wed').value=sug.wed;
-  if(sug.thu)document.getElementById('wp-thu').value=sug.thu;
-  if(sug.fri)document.getElementById('wp-fri').value=sug.fri;
-  if(sug.sat)document.getElementById('wp-sat').value=sug.sat;
-  if(sug.sun)document.getElementById('wp-sun').value=sug.sun;
   // 優先課題もフェーズから
   const phaseGoals={
     training:{p1:'新技・難度上げにチャレンジする',p2:'量を積んで体力・基礎を底上げする'},
@@ -2506,15 +2484,7 @@ function saveWeekPlan(){
     phase:document.getElementById('wp-phase').value,
     priority1:document.getElementById('wp-p1').value.trim(),
     priority2:document.getElementById('wp-p2').value.trim(),
-    constraints:document.getElementById('wp-constraints').value.trim(),
-    dayNotes:{
-      tue:document.getElementById('wp-tue').value.trim(),
-      wed:document.getElementById('wp-wed').value.trim(),
-      thu:document.getElementById('wp-thu').value.trim(),
-      fri:document.getElementById('wp-fri').value.trim(),
-      sat:document.getElementById('wp-sat').value.trim(),
-      sun:document.getElementById('wp-sun').value.trim(),
-    }
+    constraints:document.getElementById('wp-constraints').value.trim()
   };
   if(!DB.weekPlans)DB.weekPlans=[];
   const idx=DB.weekPlans.findIndex(w=>w.weekStart===ws);
@@ -2530,11 +2500,8 @@ function renderWeekPlanView(){
     <button class="btn btn-primary" onclick="openWeekPlanModal()">＋ 今週の計画を入れる</button>
   </div>`;
   if(!plans.length){html+='<div class="empty"><div class="icon">📋</div><p>週次計画がまだありません</p></div>';el.innerHTML=html;return;}
-  const DAY_KEYS=['tue','wed','thu','fri','sat','sun'];
-  const DAY_LABELS=['火（価値up）','水（基本練習）','木（通し）','金（調整）','土（価値up）','日（通し）'];
   html+=plans.map(wp=>{
     const isCurrent=wp.weekStart===thisWS;
-    const dn=wp.dayNotes||{};
     return `<div class="week-plan-card" style="${isCurrent?'border-color:var(--accent);':'' }">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <span class="week-plan-phase">${PHASE_LABELS[wp.phase]||wp.phase}</span>
@@ -2547,8 +2514,7 @@ function renderWeekPlanView(){
       </div>
       ${wp.priority1?`<div style="font-size:13px;font-weight:600;margin-bottom:4px;">① ${wp.priority1}</div>`:''}
       ${wp.priority2?`<div style="font-size:13px;font-weight:600;margin-bottom:8px;">② ${wp.priority2}</div>`:''}
-      ${wp.constraints?`<div style="font-size:12px;color:var(--yellow);margin-bottom:10px;">⚠️ 制約: ${wp.constraints}</div>`:''}
-      ${DAY_KEYS.some(k=>dn[k])?`<div>${DAY_KEYS.map((k,i)=>dn[k]?`<div class="week-day-row"><span class="week-day-label">${DAY_LABELS[i]}</span><span>${dn[k]}</span></div>`:'').join('')}</div>`:''}
+      ${wp.constraints?`<div style="font-size:12px;color:var(--yellow);">⚠️ 制約: ${wp.constraints}</div>`:''}
     </div>`;
   }).join('');
   el.innerHTML=html;
@@ -3057,16 +3023,9 @@ function planCard(c,todayStr){
   const targetSkills=(DB.skills||[]).filter(s=>s.targetCompetitionId===c.id);
   const readySkills=targetSkills.filter(s=>s.usageStatus==='ready'||s.usageStatus==='using');
 
-  // 今週の練習（編集可能）
+  // 今週の週次計画を取得して表示
   const thisWeekStart=getWeekStart(today);
-  const cwpKey=c.id+'_'+thisWeekStart;
-  const cwpData=(DB.compWeekPlans||{})[cwpKey]||{};
-  const phaseWeekSug=phase?phaseWeekSuggestions(phase.key):{};
-  const thisWeekDefault=Object.entries(phaseWeekSug).map(([d,v])=>{
-    const labels={tue:'火',wed:'水',thu:'木',fri:'金',sat:'土',sun:'日'};
-    return labels[d]?`${labels[d]}: ${v}`:'';
-  }).filter(Boolean).join('\n');
-  const thisWeekNotes=cwpData.notes!==undefined?cwpData.notes:thisWeekDefault;
+  const thisWP=(DB.weekPlans||[]).find(w=>w.weekStart===thisWeekStart)||null;
 
   // 演技スコアテーブル
   let routineScoreHtml='';
@@ -3212,16 +3171,20 @@ function planCard(c,todayStr){
       </div>
     </div>`:''}
 
-    <!-- 今週の練習（編集可能） -->
-    ${!isPast?`<div style="margin-bottom:4px;">
-      <div style="font-size:12px;font-weight:700;color:var(--accent2);margin-bottom:6px;">📋 今週の練習</div>
-      <div style="display:flex;gap:6px;align-items:flex-end;">
-        <textarea id="cwp-ta-${cwpKey}" rows="8" style="flex:1;font-size:12px;padding:6px 8px;resize:vertical;background:var(--surface2);border:1px solid var(--border);border-radius:6px;color:var(--text1);font-family:inherit;line-height:1.6;" placeholder="今週の練習内容を入力…&#10;例）月: 休養&#10;火: 通し練習…">${thisWeekNotes}</textarea>
-        <div style="display:flex;flex-direction:column;gap:4px;">
-          <button class="btn btn-primary btn-sm" onclick="saveCompWeekNote('${c.id}','${thisWeekStart}')">保存</button>
-          <span id="cwp-saved-${cwpKey}" style="font-size:9px;color:var(--green);text-align:center;"></span>
-        </div>
-      </div>
+    <!-- 今週の優先課題（週次計画から引用） -->
+    ${!isPast?`<div style="margin-bottom:12px;">
+      ${thisWP?(
+        `<div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:11px 14px;">
+          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">📋 今週の優先課題</div>
+          ${thisWP.priority1?`<div style="font-size:13px;font-weight:700;margin-bottom:4px;">① ${thisWP.priority1}</div>`:''}
+          ${thisWP.priority2?`<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">② ${thisWP.priority2}</div>`:''}
+          ${thisWP.constraints?`<div style="font-size:12px;color:var(--yellow);margin-top:4px;">⚠️ 制約: ${thisWP.constraints}</div>`:''}
+          ${thisWP.phase?`<div style="margin-top:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;">${PHASE_LABELS[thisWP.phase]||thisWP.phase}</span></div>`:''}
+        </div>`
+      ):`<div style="font-size:12px;color:var(--text3);padding:10px 0;">
+          今週の週次計画がありません。
+          <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 立てる</button>
+        </div>`}
     </div>`:''}
 
     ${!isPast?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">${buildCountdownCalendarsHTML(c)}</div>`:''}
