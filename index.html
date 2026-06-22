@@ -346,6 +346,70 @@ canvas{max-height:240px}
 ::-webkit-scrollbar-thumb{background:var(--border2);border-radius:99px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--text3);}
 
+/* ===== ライト（ウォームベージュ）テーマ ===== */
+[data-theme="light"]{
+  --bg:#f7f2ea;
+  --surface:#fdfaf4;
+  --surface2:#f0e9dc;
+  --surface3:#e6ddd0;
+  --border:#d9d0c2;
+  --border2:#c9bfaf;
+  --accent:#5355d4;
+  --accent2:#3e40b8;
+  --green:#15803d;
+  --yellow:#b45309;
+  --red:#b91c1c;
+  --text:#241c12;
+  --text2:#6b5843;
+  --text3:#a08a72;
+  --icon-invert:0;
+  --shadow:0 1px 3px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.06);
+  --shadow-lg:0 8px 32px rgba(0,0,0,.14);
+}
+/* サイドバー */
+[data-theme="light"] #sidebar{background:linear-gradient(180deg,#f0e8d8 0%,#ede5d5 100%);}
+[data-theme="light"] .logo{border-bottom-color:rgba(0,0,0,.07);}
+[data-theme="light"] .logo h1{background:linear-gradient(135deg,var(--accent2),#6d5fd4);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+[data-theme="light"] nav a:hover{background:rgba(0,0,0,.04);color:var(--text2);}
+[data-theme="light"] nav a.active{background:linear-gradient(90deg,rgba(83,85,212,.14),rgba(83,85,212,.04));color:var(--accent);border-left-color:var(--accent);}
+[data-theme="light"] #sidebar-toggle button{background:rgba(0,0,0,.04);border-color:var(--border);}
+[data-theme="light"] #sidebar-toggle button:hover{background:rgba(83,85,212,.1);color:var(--accent);}
+/* トップバー */
+[data-theme="light"] .topbar{box-shadow:0 1px 0 rgba(0,0,0,.06);}
+/* カード */
+[data-theme="light"] .card,[data-theme="light"] .monthly-review-card,[data-theme="light"] .week-plan-card,[data-theme="light"] .month-review-card{border-top-color:rgba(255,255,255,.9);}
+[data-theme="light"] .routine-app-card{border-top-color:rgba(255,255,255,.9);}
+/* テーブル */
+[data-theme="light"] tr:hover td{background:rgba(0,0,0,.025);}
+/* インプット */
+[data-theme="light"] input[type="date"]::-webkit-calendar-picker-indicator{filter:none!important;opacity:.6;}
+/* ボタン */
+[data-theme="light"] .btn-ghost:hover{background:rgba(0,0,0,.05);border-color:var(--border2);}
+[data-theme="light"] .btn-primary{background:linear-gradient(135deg,#5355d4,#4446c0);}
+[data-theme="light"] .btn-primary:hover{background:linear-gradient(135deg,#6366f1,#5355d4);}
+/* モーダル */
+[data-theme="light"] .modal{border-top-color:rgba(255,255,255,.9);background:var(--surface);}
+[data-theme="light"] .modal-close{background:rgba(0,0,0,.05);}
+[data-theme="light"] .modal-close:hover{background:rgba(0,0,0,.09);color:var(--text);}
+/* モバイルナビ */
+[data-theme="light"] #mobile-nav{background:rgba(240,233,220,.95);}
+[data-theme="light"] #mobile-nav{box-shadow:0 -1px 0 rgba(0,0,0,.08);}
+/* インラインエディタ */
+[data-theme="light"] .ie-input{color:var(--text);}
+[data-theme="light"] .ie-select{background:var(--bg);color:var(--text);}
+/* カウントダウン */
+[data-theme="light"] .countdown-box{border-top-color:rgba(255,255,255,.9);}
+/* カレンダーセル */
+[data-theme="light"] .db-cal-cell{background:var(--surface2);}
+[data-theme="light"] .db-cal-menu{background:rgba(83,85,212,.15);color:var(--accent);}
+[data-theme="light"] .db-cal-menu:hover{background:rgba(83,85,212,.3);}
+/* テーマトグルボタン */
+#theme-toggle{background:none;border:1px solid var(--border);color:var(--text2);border-radius:99px;padding:5px 12px;font-size:13px;cursor:pointer;transition:all .15s;font-family:inherit;}
+#theme-toggle:hover{border-color:var(--text3);color:var(--text);}
+/* スクロールバー（ライト） */
+[data-theme="light"] ::-webkit-scrollbar-thumb{background:var(--border2);}
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover{background:var(--text3);}
+
 /* モバイル用トップバー要素（デスクトップでは非表示） */
 .mobile-topbar-left { display: none; align-items: center; gap: 8px; }
 .mobile-logo { font-size: 17px; font-weight: 800; color: var(--text); white-space: nowrap; }
@@ -545,6 +609,7 @@ canvas{max-height:240px}
     <div class="topbar-right">
       <span id="sync-status" style="font-size:11px;padding:3px 8px;border-radius:20px;background:var(--surface2);color:var(--text3);">⏳ 接続中...</span>
       <span id="today-date" style="font-size:12px;color:var(--text3);"></span>
+      <button id="theme-toggle" onclick="toggleTheme()" title="テーマ切り替え">🌙</button>
       <button class="btn btn-primary btn-sm no-mobile" onclick="openJournalModal()">＋ 練習記録</button>
     </div>
   </div>
@@ -1505,6 +1570,22 @@ function startFirebaseSync(){
     });
   }).catch(()=>setSyncStatus('offline'));
 }
+
+// ---- THEME ----
+function applyTheme(theme){
+  document.documentElement.setAttribute('data-theme', theme);
+  const btn = document.getElementById('theme-toggle');
+  if(btn) btn.textContent = theme === 'light' ? '☀️' : '🌙';
+  localStorage.setItem('gymtrack_theme', theme);
+}
+function toggleTheme(){
+  const current = document.documentElement.getAttribute('data-theme');
+  applyTheme(current === 'light' ? 'dark' : 'light');
+}
+(function initTheme(){
+  const saved = localStorage.getItem('gymtrack_theme') || 'dark';
+  applyTheme(saved);
+})();
 
 // ---- DATE UTILS ----
 // toISOString()はUTC基準のため日本時間(UTC+9)では深夜0〜9時に「昨日」になるバグを防ぐ
