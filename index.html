@@ -583,12 +583,12 @@ canvas{max-height:240px}
   <div class="logo" onclick="window.innerWidth<=768?closeMobileSidebar():toggleSidebar()" style="cursor:pointer;" title="クリックでサイドバー開閉"><h1>🤸 GymTrack</h1><p class="nav-label">体操競技 練習管理</p></div>
   <nav>
     <span class="nav-section">メイン</span>
-    <a class="active" onclick="goto('dashboard')" id="nav-dashboard"><span class="icon">🏠</span><span class="nav-label">ダッシュボード</span></a>
+    <a class="active" onclick="goto('dashboard')" id="nav-dashboard"><span class="icon">🏠</span><span class="nav-label">ホーム</span></a>
     <a onclick="goto('journal')" id="nav-journal"><span class="icon">📓</span><span class="nav-label">練習日誌</span></a>
     <a onclick="goto('skills')" id="nav-skills"><span class="icon">⚡</span><span class="nav-label">新技リスト</span></a>
     <span class="nav-section">計画・分析</span>
     <a onclick="goto('routine')" id="nav-routine"><span class="icon">📋</span><span class="nav-label">演技構成表</span></a>
-    <a onclick="goto('plan')" id="nav-plan"><span class="icon">🎯</span><span class="nav-label">試合逆算計画</span></a>
+    <a onclick="goto('plan')" id="nav-plan"><span class="icon">🎯</span><span class="nav-label">大会計画</span></a>
     <a onclick="goto('results')" id="nav-results"><span class="icon">🏆</span><span class="nav-label">大会結果</span></a>
     <a onclick="goto('analysis')" id="nav-analysis"><span class="icon">📊</span><span class="nav-label">傾向分析</span></a>
     <span class="nav-section">設定</span>
@@ -1420,7 +1420,7 @@ const APP_COLORS = {FX:'#6366f1',PH:'#22c55e',SR:'#f59e0b',VT:'#ef4444',PB:'#8b5
 const EG_ROMAN = {I:'Ⅰ',II:'Ⅱ',III:'Ⅲ',IV:'Ⅳ',V:'Ⅴ'};
 const DV_LETTER = v => {const m={0.1:'A',0.2:'B',0.3:'C',0.4:'D',0.5:'E',0.6:'F',0.7:'G',0.8:'H',0.9:'I',1.0:'J'};return m[+v]||'?'};
 const PAGES = ['dashboard','journal','skills','plan','results','routine','analysis','settings'];
-const PAGE_TITLES = {dashboard:'ダッシュボード',journal:'練習日誌',skills:'新技リスト',plan:'試合逆算計画',results:'大会結果',routine:'演技構成表',analysis:'傾向分析',settings:'設定'};
+const PAGE_TITLES = {dashboard:'ホーム',journal:'練習日誌',skills:'新技リスト',plan:'大会計画',results:'大会結果',routine:'演技構成表',analysis:'傾向分析',settings:'設定'};
 
 // 週のメニュータイプ デフォルト値
 const DAY_MENU_DEFAULT = {
