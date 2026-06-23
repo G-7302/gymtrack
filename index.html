@@ -168,13 +168,13 @@ canvas{max-height:240px}
 .routine-app-card{background:var(--surface);border:1px solid var(--border);border-top:1px solid rgba(255,255,255,.04);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 .routine-app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
 .routine-app-name{font-size:14px;font-weight:700}
-.routine-summary{display:grid;grid-template-columns:repeat(9,1fr);background:rgba(99,102,241,.05);padding:8px 14px;font-size:11px;border-bottom:1px solid var(--border);}
-.routine-summary .s-label{color:var(--text3);font-size:10px;text-align:center}
-.routine-summary .s-val{font-weight:700;text-align:center;color:var(--accent2);font-size:13px}
-.routine-summary .s-dscore{color:var(--green);font-size:15px;font-weight:800}
-.routine-elem-table{width:100%;border-collapse:collapse;font-size:12px}
-.routine-elem-table th{padding:5px 8px;text-align:left;font-size:10px;color:var(--text3);border-bottom:1px solid var(--border);font-weight:600}
-.routine-elem-table td{padding:5px 8px;border-bottom:1px solid var(--border)}
+.routine-summary{display:grid;grid-template-columns:repeat(9,1fr);background:rgba(99,102,241,.05);padding:10px 14px;font-size:11px;border-bottom:1px solid var(--border);}
+.routine-summary .s-label{color:var(--text3);font-size:10px;text-align:center;margin-bottom:2px;}
+.routine-summary .s-val{font-weight:700;text-align:center;color:var(--accent2);font-size:16px}
+.routine-summary .s-dscore{color:var(--green);font-size:20px;font-weight:800}
+.routine-elem-table{width:100%;border-collapse:collapse;font-size:12px;table-layout:fixed;}
+.routine-elem-table th{padding:5px 8px;text-align:left;font-size:10px;color:var(--text3);border-bottom:1px solid var(--border);font-weight:600;overflow:hidden;}
+.routine-elem-table td{padding:5px 8px;border-bottom:1px solid var(--border);overflow:hidden;}
 .routine-elem-table tr:last-child td{border-bottom:none}
 .routine-elem-table td.dv-cell{font-weight:700;color:var(--accent2)}
 .routine-elem-table td.eg-cell{text-align:center}
@@ -188,7 +188,7 @@ canvas{max-height:240px}
 .routine-elem-table tr.drag-ghost{opacity:.35;background:var(--surface2);}
 .routine-elem-table tr.drag-target td{border-top:2px solid var(--accent)!important;}
 .routine-elem-table tr.drag-ghost td{background:rgba(99,102,241,.15)!important;}
-.routine-elem-table td.ie-name{cursor:text;}
+.routine-elem-table td.ie-name{cursor:text;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
 .routine-elem-table td.ie-name:hover{background:rgba(99,102,241,.08);}
 .routine-elem-table td.ie-sel{cursor:pointer;}
 .routine-elem-table td.ie-sel:hover{background:rgba(99,102,241,.08);}
@@ -2973,6 +2973,7 @@ function srHTML(s,withActions=false){
       <div class="skill-info" style="flex:1;">
         <div class="skill-name">${s.name} ${dvBadge} <span style="font-size:10px;color:var(--accent2);font-weight:600;">${statusLabel}</span></div>
         <div class="skill-meta">${metaText}${targetComp?` · 🎯 ${targetComp.name}`:''}${daysLeft!=null?` · <span style="color:${urgentColor};font-weight:700;">目標まで${daysLeft}日</span>`:''}</div>
+        ${s.notes?`<div style="font-size:11px;color:var(--text2);margin-top:4px;line-height:1.5;padding:4px 8px;background:var(--surface2);border-radius:var(--radius-xs);border-left:2px solid var(--border2);">📝 ${s.notes}</div>`:''}
       </div>
       <div style="display:flex;align-items:center;gap:6px;">
         <span style="font-size:13px;font-weight:700;color:${color};">${s.mastery}%</span>
@@ -3093,7 +3094,7 @@ function resultCard(c){
           <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;margin-top:4px;"></span>
           <div>
             <div style="font-size:13px;font-weight:700;color:${color};">${COP[a].name}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:1px;">${sub}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;font-weight:600;">${sub}</div>
           </div>
         </div>
         <div style="text-align:right;padding-right:12px;margin-right:12px;border-right:1px solid var(--border);flex-shrink:0;">
@@ -3265,7 +3266,7 @@ function planCard(c,todayStr){
           <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;margin-top:4px;"></span>
           <div>
             <div style="font-size:13px;font-weight:700;color:${color};">${COP[s.app].name}</div>
-            <div style="font-size:10px;color:var(--text3);margin-top:1px;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</div>
+            <div style="font-size:12px;color:var(--text2);margin-top:2px;font-weight:600;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</div>
           </div>
         </div>
         <div style="font-size:17px;font-weight:800;color:var(--text1);flex-shrink:0;">${s.score.toFixed(3)}</div>
@@ -3672,7 +3673,7 @@ function renderTotalTable(r){
       <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;margin-top:4px;"></span>
       <div>
         <div style="font-size:13px;font-weight:700;color:${color};">${COP[a].name}</div>
-        <div style="font-size:10px;color:var(--text3);margin-top:1px;">${sub}</div>
+        <div style="font-size:12px;color:var(--text2);margin-top:2px;font-weight:600;">${sub}</div>
       </div>
     </div>`;
     if(!rv){
