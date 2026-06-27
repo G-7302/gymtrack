@@ -2584,7 +2584,7 @@ function renderJournalList(){
     const appBadges=(j.apparatus||[]).map(a=>`<span class="badge badge-blue">${COP[a]?.name||a}</span>`).join('');
     // 種目別ノートのサマリー
     const appNotes=j.apparatusNotes||{};
-    const appNoteHtml=Object.entries(appNotes).filter(([a,n])=>n.review||n.action).map(([a,n])=>{
+    const appNoteHtml=APPARATUS_M.filter(a=>appNotes[a]&&(appNotes[a].review||appNotes[a].action)).map(a=>{const n=appNotes[a];
       const color=APP_COLORS[a]||'#6366f1';
       const name=COP[a]?.name||a;
       return `<div style="display:flex;gap:6px;align-items:baseline;font-size:12px;margin-top:4px;">
