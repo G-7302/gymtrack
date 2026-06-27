@@ -167,6 +167,29 @@ canvas{max-height:240px}
 
 /* ===== ROUTINE SHEET STYLES ===== */
 .routine-grid-all{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);grid-auto-flow:column;gap:12px;margin-bottom:16px}
+/* 通し記録 */
+.rt-stats{display:flex;gap:12px;margin-bottom:16px;flex-wrap:wrap;}
+.rt-stat-card{flex:1;min-width:100px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:12px 16px;text-align:center;}
+.rt-stat-val{font-size:24px;font-weight:800;color:var(--accent2);}
+.rt-stat-label{font-size:11px;color:var(--text3);margin-top:2px;}
+.rt-table{width:100%;border-collapse:collapse;font-size:13px;}
+.rt-table th{text-align:center;padding:8px 4px;font-size:11px;color:var(--text3);border-bottom:2px solid var(--border);font-weight:600;}
+.rt-table td{text-align:center;padding:8px 4px;border-bottom:1px solid var(--border);}
+.rt-table tr:hover td{background:var(--surface2);}
+.rt-res{font-size:16px;font-weight:700;}
+.rt-res.maru{color:#22c55e;}
+.rt-res.sankaku{color:#f59e0b;}
+.rt-res.batu{color:#ef4444;}
+.rt-res.none{color:var(--border2);}
+.rt-score-pill{display:inline-block;padding:2px 10px;border-radius:99px;font-size:12px;font-weight:700;}
+.rt-btn-group{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;}
+.rt-app-btn{display:flex;flex-direction:column;align-items:center;gap:4px;padding:10px 8px;border-radius:var(--radius);border:2px solid var(--border2);background:var(--surface2);cursor:pointer;min-width:64px;transition:.15s;}
+.rt-app-btn .rt-app-name{font-size:11px;color:var(--text2);font-weight:600;}
+.rt-app-btn .rt-app-res{font-size:22px;font-weight:800;}
+.rt-app-btn.maru{border-color:#22c55e;background:rgba(34,197,94,.12);}
+.rt-app-btn.sankaku{border-color:#f59e0b;background:rgba(245,158,11,.12);}
+.rt-app-btn.batu{border-color:#ef4444;background:rgba(239,68,68,.12);}
+.rt-badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:99px;font-size:11px;font-weight:700;background:rgba(99,102,241,.12);color:var(--accent2);border:1px solid rgba(99,102,241,.2);}
 .routine-app-card{background:var(--surface);border:1px solid var(--border);border-top:1px solid rgba(255,255,255,.04);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 .routine-app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
 .routine-app-name{font-size:14px;font-weight:700}
@@ -591,6 +614,7 @@ canvas{max-height:240px}
     <a onclick="goto('plan')" id="nav-plan"><span class="icon">🎯</span><span class="nav-label">大会計画</span></a>
     <a onclick="goto('results')" id="nav-results"><span class="icon">🏆</span><span class="nav-label">大会結果</span></a>
     <a onclick="goto('analysis')" id="nav-analysis"><span class="icon">📊</span><span class="nav-label">傾向分析</span></a>
+    <a onclick="goto('runthrough')" id="nav-runthrough"><span class="icon">🔄</span><span class="nav-label">通し記録</span></a>
     <span class="nav-section">設定</span>
     <a onclick="goto('settings')" id="nav-settings"><span class="icon">⚙️</span><span class="nav-label">設定</span></a>
   </nav>
@@ -767,6 +791,20 @@ canvas{max-height:240px}
     <div class="card"><div class="card-title">🧠 メンタル推移</div><canvas id="chart-mental"></canvas></div>
   </div>
   <div class="card"><div class="card-title">📈 技習熟度の推移</div><canvas id="chart-skill-trend" style="max-height:200px;"></canvas></div>
+</div>
+
+<!-- RUNTHROUGH -->
+<div class="page" id="page-runthrough">
+  <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:16px;">
+    <div style="font-size:13px;color:var(--text2);">各種目の通し結果を記録・分析します</div>
+    <button class="btn btn-primary" onclick="openRtModal()">＋ 通し記録を追加</button>
+  </div>
+  <!-- 統計バー -->
+  <div class="rt-stats" id="rt-stats"></div>
+  <!-- テーブル -->
+  <div class="card" style="overflow-x:auto;">
+    <div id="rt-table-wrap"></div>
+  </div>
 </div>
 
 <!-- SETTINGS -->
@@ -1004,6 +1042,30 @@ canvas{max-height:240px}
     <div style="display:flex;gap:10px;justify-content:flex-end;">
       <button class="btn btn-ghost" onclick="closeModal('modal-monthreview')">キャンセル</button>
       <button class="btn btn-primary" onclick="saveMonthReview()">保存</button>
+    </div>
+  </div>
+</div>
+
+<!-- RunThrough Modal -->
+<div class="modal-overlay" id="modal-runthrough">
+  <div class="modal" style="max-width:520px;">
+    <div class="modal-title"><span id="rt-modal-title">🔄 通し記録</span><button class="modal-close" onclick="closeModal('modal-runthrough')">✕</button></div>
+    <input type="hidden" id="rt-edit-id">
+    <div class="form-group">
+      <label>日付</label>
+      <input type="date" id="rt-date">
+    </div>
+    <div class="form-group">
+      <label>種目結果 <span style="font-size:11px;color:var(--text3);">（タップで切り替え：○ → △ → × → 未）</span></label>
+      <div class="rt-btn-group" id="rt-app-btns"></div>
+    </div>
+    <div class="form-group">
+      <label>メモ</label>
+      <textarea id="rt-memo" style="min-height:64px;" placeholder="例：鉄棒で落下。後半の集中力が課題。"></textarea>
+    </div>
+    <div style="display:flex;gap:10px;justify-content:flex-end;">
+      <button class="btn btn-ghost" onclick="closeModal('modal-runthrough')">キャンセル</button>
+      <button class="btn btn-primary" onclick="saveRt()">保存</button>
     </div>
   </div>
 </div>
@@ -1412,8 +1474,8 @@ const APPARATUS_M = ['FX','PH','SR','VT','PB','HB'];
 const APP_COLORS = {FX:'#6366f1',PH:'#22c55e',SR:'#f59e0b',VT:'#ef4444',PB:'#8b5cf6',HB:'#06b6d4'};
 const EG_ROMAN = {I:'Ⅰ',II:'Ⅱ',III:'Ⅲ',IV:'Ⅳ',V:'Ⅴ'};
 const DV_LETTER = v => {const m={0.1:'A',0.2:'B',0.3:'C',0.4:'D',0.5:'E',0.6:'F',0.7:'G',0.8:'H',0.9:'I',1.0:'J'};return m[+v]||'?'};
-const PAGES = ['dashboard','journal','skills','plan','results','routine','analysis','settings'];
-const PAGE_TITLES = {dashboard:'ホーム',journal:'練習日誌',skills:'新技リスト',plan:'大会計画',results:'大会結果',routine:'演技構成表',analysis:'傾向分析',settings:'設定'};
+const PAGES = ['dashboard','journal','skills','plan','results','routine','analysis','runthrough','settings'];
+const PAGE_TITLES = {dashboard:'ホーム',journal:'練習日誌',skills:'新技リスト',plan:'大会計画',results:'大会結果',routine:'演技構成表',analysis:'傾向分析',runthrough:'通し記録',settings:'設定'};
 
 // 週のメニュータイプ デフォルト値
 const DAY_MENU_DEFAULT = {
@@ -1465,6 +1527,7 @@ let DB = {
   skillOverrides:{},
   weekPlans:[],    // [{id,weekStart,phase,priority1,priority2,constraints,dayNotes:{tue,wed,thu,fri,sat,sun}}]
   monthReviews:[], // [{id,yearMonth,recurringIssues,growthPoints,competitionAlignment,nextMonthTheme}]
+  runThroughs:[],  // [{id,date,results:{FX,PH,SR,VT,PB,HB},memo}]
   dayOverrides:{}, // {dateStr: menuType} — 特定日付のメニュー上書き
   events:[],       // [{id,date,title,note,color}] — 練習外の予定
   compWeekPlans:{} // {`${compId}_${weekStart}`: {notes, linkedWeekPlanId}} — 試合逆算週次メモ
@@ -1678,6 +1741,7 @@ function goto(page){
   if(page==='results')renderResultsPage();
   if(page==='routine')renderRoutinePage();
   if(page==='analysis')setTimeout(renderAnalysis,50);
+  if(page==='runthrough')renderRtPage();
   if(page==='settings')loadSettings();
 }
 
@@ -2582,6 +2646,9 @@ function renderJournalList(){
     const stars=j.achievement?'★'.repeat(j.achievement)+'☆'.repeat(5-j.achievement):'';
     const condColor=j.condition<=2?'var(--red)':j.condition===3?'var(--yellow)':'var(--green)';
     const appBadges=(j.apparatus||[]).map(a=>`<span class="badge badge-blue">${COP[a]?.name||a}</span>`).join('');
+    // 通し記録バッジ
+    const rtEntry=(DB.runThroughs||[]).find(r=>r.date===j.date);
+    const rtBadge=rtEntry?`<span class="rt-badge" onclick="goto('runthrough')" title="通し記録を見る">🔄 ○${rtScoreOf(rtEntry)}/6</span>`:'';
     // 種目別ノートのサマリー
     const appNotes=j.apparatusNotes||{};
     const appNoteHtml=APPARATUS_M.filter(a=>appNotes[a]&&(appNotes[a].review||appNotes[a].action)).map(a=>{const n=appNotes[a];
@@ -2602,6 +2669,7 @@ function renderJournalList(){
           <span class="jlog-date">${j.date}</span>
           ${menuType?`<span class="jlog-day-type">${icon} ${menuType}</span>`:''}
           ${appBadges}
+          ${rtBadge}
           ${j.duration?`<span style="font-size:11px;color:var(--text3);">⏱️${j.duration}分</span>`:''}
           ${j.condition?`<span style="font-size:11px;font-weight:700;color:${condColor};">体調${j.condition}</span>`:''}
           ${stars?`<span class="jlog-achievement" style="margin-left:0;">${stars}</span>`:''}
@@ -2808,6 +2876,122 @@ function renderMonthReviewView(){
 }
 function deleteMonthReview(ym){if(!confirm('削除しますか？'))return;DB.monthReviews=(DB.monthReviews||[]).filter(r=>r.yearMonth!==ym);saveDB();renderMonthReviewView();}
 function deleteMonthReviewFromCal(ym){if(!confirm(`${ym}の月次内省を削除しますか？`))return;DB.monthReviews=(DB.monthReviews||[]).filter(r=>r.yearMonth!==ym);saveDB();renderMonthlyReviewList();}
+
+// ---- 通し記録 ----
+const RT_CYCLE=['○','△','×',''];
+let _rtResults={};
+
+function rtResClass(v){return v==='○'?'maru':v==='△'?'sankaku':v==='×'?'batu':'none';}
+function rtResDisplay(v){return v||'ー';}
+
+function openRtModal(id){
+  _rtResults={};
+  const rt=id?(DB.runThroughs||[]).find(r=>r.id===id):null;
+  document.getElementById('rt-edit-id').value=id||'';
+  document.getElementById('rt-modal-title').textContent=id?'🔄 通し記録を編集':'🔄 通し記録を追加';
+  document.getElementById('rt-date').value=rt?rt.date:localDate();
+  document.getElementById('rt-memo').value=rt?rt.memo||'':'';
+  if(rt)_rtResults=Object.assign({},rt.results||{});
+  renderRtAppBtns();
+  openModal('modal-runthrough');
+}
+
+function renderRtAppBtns(){
+  const wrap=document.getElementById('rt-app-btns');
+  if(!wrap)return;
+  wrap.innerHTML=APPARATUS_M.map(a=>{
+    const v=_rtResults[a]||'';
+    const cls=rtResClass(v);
+    return `<div class="rt-app-btn ${cls}" id="rt-btn-${a}" onclick="cycleRtResult('${a}')">
+      <span class="rt-app-name">${COP[a].name}</span>
+      <span class="rt-app-res" style="color:${cls==='maru'?'#22c55e':cls==='sankaku'?'#f59e0b':cls==='batu'?'#ef4444':'var(--border2)'}">${v||'ー'}</span>
+    </div>`;
+  }).join('');
+}
+
+function cycleRtResult(a){
+  const cur=_rtResults[a]||'';
+  const idx=RT_CYCLE.indexOf(cur);
+  _rtResults[a]=RT_CYCLE[(idx+1)%RT_CYCLE.length];
+  renderRtAppBtns();
+}
+
+function saveRt(){
+  const date=document.getElementById('rt-date').value;
+  if(!date){alert('日付を入力してください');return;}
+  const id=document.getElementById('rt-edit-id').value||('rt_'+Date.now());
+  const memo=document.getElementById('rt-memo').value.trim();
+  const entry={id,date,results:Object.assign({},_rtResults),memo};
+  if(!DB.runThroughs)DB.runThroughs=[];
+  const idx=DB.runThroughs.findIndex(r=>r.id===id);
+  if(idx>=0)DB.runThroughs[idx]=entry; else DB.runThroughs.push(entry);
+  saveDB();
+  closeModal('modal-runthrough');
+  renderRtPage();
+}
+
+function deleteRt(id){
+  if(!confirm('この通し記録を削除しますか？'))return;
+  DB.runThroughs=(DB.runThroughs||[]).filter(r=>r.id!==id);
+  saveDB();
+  renderRtPage();
+}
+
+function rtScoreOf(rt){
+  return APPARATUS_M.filter(a=>(rt.results||{})[a]==='○').length;
+}
+
+function renderRtPage(){
+  const list=[...(DB.runThroughs||[])].sort((a,b)=>b.date.localeCompare(a.date));
+  // 統計
+  const statsEl=document.getElementById('rt-stats');
+  const total=list.length;
+  const allMaru=list.filter(r=>rtScoreOf(r)===6).length;
+  const recentScores=list.slice(0,10).map(r=>rtScoreOf(r));
+  const avgScore=recentScores.length?(recentScores.reduce((a,b)=>a+b,0)/recentScores.length).toFixed(1):'--';
+  const maruCounts=APPARATUS_M.map(a=>({a,cnt:list.filter(r=>(r.results||{})[a]==='○').length}));
+  const bestApp=total?maruCounts.sort((x,y)=>y.cnt-x.cnt)[0]:null;
+  statsEl.innerHTML=`
+    <div class="rt-stat-card"><div class="rt-stat-val">${total}</div><div class="rt-stat-label">総通し回数</div></div>
+    <div class="rt-stat-card"><div class="rt-stat-val">${avgScore}</div><div class="rt-stat-label">直近10回 平均○数</div></div>
+    <div class="rt-stat-card"><div class="rt-stat-val">${allMaru}</div><div class="rt-stat-label">全種目○の回数</div></div>
+    ${bestApp?`<div class="rt-stat-card"><div class="rt-stat-val" style="font-size:16px;">${COP[bestApp.a].name}</div><div class="rt-stat-label">最多○ 種目 (${bestApp.cnt}回)</div></div>`:''}
+  `;
+  // テーブル
+  const wrap=document.getElementById('rt-table-wrap');
+  if(!list.length){
+    wrap.innerHTML='<div class="empty"><div class="icon">🔄</div><p>通し記録がまだありません</p><button class="btn btn-ghost" onclick="openRtModal()" style="margin-top:8px;">最初の記録を追加</button></div>';
+    return;
+  }
+  const appHeaders=APPARATUS_M.map(a=>`<th style="min-width:40px;">${COP[a].name}</th>`).join('');
+  const rows=list.map(r=>{
+    const score=rtScoreOf(r);
+    const scoreColor=score===6?'#22c55e':score>=4?'#f59e0b':'#ef4444';
+    const cells=APPARATUS_M.map(a=>{
+      const v=(r.results||{})[a]||'';
+      const cls=rtResClass(v);
+      return `<td><span class="rt-res ${cls}">${rtResDisplay(v)}</span></td>`;
+    }).join('');
+    return `<tr>
+      <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${r.date}</td>
+      ${cells}
+      <td><span class="rt-score-pill" style="background:${scoreColor}22;color:${scoreColor};">○${score}/6</span></td>
+      <td style="font-size:11px;color:var(--text2);text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.memo||''}</td>
+      <td style="white-space:nowrap;">
+        <button class="btn btn-ghost btn-sm" onclick="openRtModal('${r.id}')">✏️</button>
+        <button class="btn btn-danger btn-sm" onclick="deleteRt('${r.id}')">🗑️</button>
+      </td>
+    </tr>`;
+  }).join('');
+  wrap.innerHTML=`<table class="rt-table">
+    <thead><tr>
+      <th style="text-align:left;padding-left:8px;">日付</th>
+      ${appHeaders}
+      <th>達成</th><th style="text-align:left;">メモ</th><th></th>
+    </tr></thead>
+    <tbody>${rows}</tbody>
+  </table>`;
+}
 
 // ---- SKILLS ----
 function onSkillApparatusChange(){
