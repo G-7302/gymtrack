@@ -951,6 +951,12 @@ canvas{max-height:240px}
         <div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">練習計画タブで種目を選択してください</div>
       </div>
 
+      <div class="journal-section-header">🔄 通し結果</div>
+      <div style="margin-bottom:12px;">
+        <div style="font-size:11px;color:var(--text3);margin-bottom:8px;">タップで切り替え：○ → △ → × → 未記録</div>
+        <div class="rt-btn-group" id="j-rt-app-btns"></div>
+      </div>
+
       <div class="form-group"><label>メモ・その他気づき</label><textarea id="j-notes" style="min-height:50px;"></textarea></div>
       <div class="form-group"><label>練習した技（チェックで+2%）</label>
         <div id="j-skill-checkboxes" style="max-height:120px;overflow-y:auto;background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);"></div>
@@ -2344,6 +2350,7 @@ function openJournalWithDate(dateStr){
 function openJournalModal(editId){
   jApparatus=new Set(); journalCondition=0; journalMental=0; journalAchievement=0;
   jApparatusNoteData={};
+  _jRtResults={};
   const today=localDate();
 
   // フォームリセット（前回セッションの残留データを完全クリア）
@@ -2384,6 +2391,9 @@ function openJournalModal(editId){
       if(j.constraints){document.getElementById('j-consult-zone').style.display='';if(det)det.setAttribute('open','');}
       ['c1','c2','c3','c4'].forEach(k=>{const el=document.getElementById('j-'+k);if(el)el.value=j.consultAnswers?.[{c1:'weeksToComp',c2:'canDo',c3:'priority',c4:'sensation'}[k]]||'';});
       jApparatusNoteData=JSON.parse(JSON.stringify(j.apparatusNotes||{}));
+      // 同日の通し記録を読み込む
+      const existRt=(DB.runThroughs||[]).find(r=>r.date===j.date);
+      if(existRt)_jRtResults=Object.assign({},existRt.results||{});
       // 練習計画が記入済みなら振り返りタブで開く
       if(j.theme||j.overallFocus||j.warmupFocus||(j.apparatus&&j.apparatus.length>0&&j.overallReview))openOnReview=true;
     }
@@ -2419,7 +2429,7 @@ function _applyJMode(){
   document.getElementById('jmode-plan-btn').classList.toggle('active',isPlan);
   document.getElementById('jmode-review-btn').classList.toggle('active',!isPlan);
   if(isPlan) renderApparatusNotesPlan();
-  else { renderApparatusNotesReview(); renderPreSummary(); updateCondDots(); updateMentalDots(); updateAchievementDots(); }
+  else { renderApparatusNotesReview(); renderPreSummary(); updateCondDots(); updateMentalDots(); updateAchievementDots(); renderJRtBtns(); }
 }
 
 // DOM から jApparatusNoteData へ退避（現在表示中のタブのフィールドのみ読み取る）
@@ -2617,6 +2627,15 @@ function saveJournalEntry(){
   };
   if(editId){DB.journal=DB.journal.map(j=>j.id===editId?entry:j);}
   else{DB.journal.push(entry);}
+  // 通し結果が1つでも入力されていれば DB.runThroughs に保存/更新
+  const hasRt=Object.values(_jRtResults).some(v=>v);
+  if(hasRt){
+    if(!DB.runThroughs)DB.runThroughs=[];
+    const rtId=((DB.runThroughs||[]).find(r=>r.date===date)||{}).id||('rt_'+Date.now());
+    const rtIdx=DB.runThroughs.findIndex(r=>r.date===date);
+    const rtEntry={id:rtId,date,results:Object.assign({},_jRtResults),memo:''};
+    if(rtIdx>=0)DB.runThroughs[rtIdx]=rtEntry; else DB.runThroughs.push(rtEntry);
+  }
   saveDB();closeModal('modal-journal');
   if(document.getElementById('page-journal').classList.contains('active'))renderJournalList();
   if(document.getElementById('page-dashboard').classList.contains('active'))renderDashboard();
@@ -2880,8 +2899,30 @@ function deleteMonthReviewFromCal(ym){if(!confirm(`${ym}の月次内省を削除
 // ---- 通し記録 ----
 const RT_CYCLE=['○','△','×',''];
 let _rtResults={};
+let _jRtResults={};  // ジャーナルモーダル内の通し結果
 
 function rtResClass(v){return v==='○'?'maru':v==='△'?'sankaku':v==='×'?'batu':'none';}
+
+function renderJRtBtns(){
+  const wrap=document.getElementById('j-rt-app-btns');
+  if(!wrap)return;
+  wrap.innerHTML=APPARATUS_M.map(a=>{
+    const v=_jRtResults[a]||'';
+    const cls=rtResClass(v);
+    const color=cls==='maru'?'#22c55e':cls==='sankaku'?'#f59e0b':cls==='batu'?'#ef4444':'var(--border2)';
+    return `<div class="rt-app-btn ${cls}" onclick="cycleJRtResult('${a}')">
+      <span class="rt-app-name">${COP[a].name}</span>
+      <span class="rt-app-res" style="color:${color};">${v||'ー'}</span>
+    </div>`;
+  }).join('');
+}
+
+function cycleJRtResult(a){
+  const cur=_jRtResults[a]||'';
+  const idx=RT_CYCLE.indexOf(cur);
+  _jRtResults[a]=RT_CYCLE[(idx+1)%RT_CYCLE.length];
+  renderJRtBtns();
+}
 function rtResDisplay(v){return v||'ー';}
 
 function openRtModal(id){
