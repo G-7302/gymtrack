@@ -1591,10 +1591,11 @@ let DB = {
   skillOverrides:{},
   weekPlans:[],    // [{id,weekStart,phase,priority1,priority2,constraints,dayNotes:{tue,wed,thu,fri,sat,sun}}]
   monthReviews:[], // [{id,yearMonth,recurringIssues,growthPoints,competitionAlignment,nextMonthTheme}]
-  runThroughs:[],  // [{id,date,results:{FX,PH,SR,VT,PB,HB},memo}]
-  dayOverrides:{}, // {dateStr: menuType} — 特定日付のメニュー上書き
-  events:[],       // [{id,date,title,note,color}] — 練習外の予定
-  compWeekPlans:{} // {`${compId}_${weekStart}`: {notes, linkedWeekPlanId}} — 試合逆算週次メモ
+  runThroughs:[],      // [{id,date,results:{FX,PH,SR,VT,PB,HB},memo}]
+  dayOverrides:{},     // {dateStr: menuType} — 特定日付のメニュー上書き
+  events:[],           // [{id,date,title,note,color}] — 練習外の予定
+  compWeekPlans:{},    // {`${compId}_${weekStart}`: {notes, linkedWeekPlanId}} — 試合逆算週次メモ
+  unifiedSkillOrder:[] // [{id,type}] — 新技リスト統合並び順
 };
 let charts={}, journalCondition=0, journalMental=0, journalApparatus=new Set(), skillFilter='ALL', comboFilter='ALL', skillTabMode='single', _skillSort='default';
 let pickerState={apparatus:'FX',eg:'ALL',callback:null};
@@ -3241,42 +3242,50 @@ function saveSkillUnified(){
 function deleteSkill(id){if(!confirm('削除しますか？'))return;DB.skills=DB.skills.filter(s=>s.id!==id);saveDB();renderSkillList();}
 function deleteComboSkill(id){if(!confirm('削除しますか？'))return;DB.combinations=(DB.combinations||[]).filter(c=>c.id!==id);saveDB();renderSkillList();}
 function setSkillSort(val){_skillSort=val;renderSkillList();}
+// 統合順序を最新の全アイテムと同期（新規追加分を末尾に追記、削除分を除去）
+function syncUnifiedOrder(allItems){
+  const existing=DB.unifiedSkillOrder||[];
+  const allMap=new Map(allItems.map(x=>[x.id,x]));
+  // 既存順序から有効なもの残す
+  const synced=existing.filter(o=>allMap.has(o.id));
+  const syncedIds=new Set(synced.map(o=>o.id));
+  // 新規アイテムを末尾追加
+  allItems.forEach(x=>{if(!syncedIds.has(x.id))synced.push({id:x.id,type:x._type});});
+  DB.unifiedSkillOrder=synced;
+}
 function renderSkillList(){
   document.getElementById('skill-filter-chips').innerHTML=['<div class="app-chip'+(skillFilter==='ALL'?' selected':'')+'" onclick="setSkillFilter(\'ALL\')">全種目</div>',...APPARATUS_M.map(a=>`<div class="app-chip${skillFilter===a?' selected':''}" onclick="setSkillFilter('${a}')">${COP[a].name}</div>`)].join('');
-  // 個別技＋連続技を統合
   const allItems=[
     ...(DB.skills||[]).map(s=>({...s,_type:'single'})),
     ...(DB.combinations||[]).map(c=>({...c,_type:'combo'}))
   ];
   const filtered=skillFilter==='ALL'?allItems:allItems.filter(x=>x.apparatus===skillFilter);
-  // ソート
-  let sorted=[...filtered];
-  if(_skillSort==='targetDate'){
-    sorted.sort((a,b)=>{
+  let sorted;
+  if(_skillSort==='default'){
+    syncUnifiedOrder(allItems);
+    const orderMap=new Map((DB.unifiedSkillOrder||[]).map((o,i)=>[o.id,i]));
+    sorted=[...filtered].sort((a,b)=>(orderMap.get(a.id)??9999)-(orderMap.get(b.id)??9999));
+  } else if(_skillSort==='targetDate'){
+    sorted=[...filtered].sort((a,b)=>{
       const ad=a.masteryTargetDate||null,bd=b.masteryTargetDate||null;
       if(ad&&bd)return ad.localeCompare(bd);
-      if(ad&&!bd)return -1;
-      if(!ad&&bd)return 1;
+      if(ad&&!bd)return -1;if(!ad&&bd)return 1;
       return (b.mastery||0)-(a.mastery||0);
     });
-  } else if(_skillSort==='mastery'){
-    sorted.sort((a,b)=>(b.mastery||0)-(a.mastery||0));
+  } else {
+    sorted=[...filtered].sort((a,b)=>(b.mastery||0)-(a.mastery||0));
   }
   const container=document.getElementById('skill-list');
   if(!sorted.length){container.innerHTML='<div class="empty"><div class="icon">⚡</div><p>技を追加してください</p></div>';return;}
-  container.innerHTML=sorted.map((x,i)=>unifiedSkillCardHTML(x,i)).join('');
-  // デフォルト順のみDnD有効（個別技のみ対象）
-  if(_skillSort==='default'){
-    const skillsOnly=sorted.filter(x=>x._type==='single');
-    initSkillDnD(container,skillsOnly);
-  }
+  container.innerHTML=sorted.map(x=>unifiedSkillCardHTML(x)).join('');
+  if(_skillSort==='default')initUnifiedDnD(container,sorted,allItems);
 }
 function setSkillFilter(f){skillFilter=f;renderSkillList();}
-function unifiedSkillCardHTML(x,idx){
+function unifiedSkillCardHTML(x){
   if(x._type==='combo')return comboCardHTML(x);
-  return singleSkillCardHTML(x,idx);
+  return singleSkillCardHTML(x);
 }
-function singleSkillCardHTML(s,idx){
+function singleSkillCardHTML(s){
   const color=s.mastery<40?'var(--red)':s.mastery<70?'var(--yellow)':'var(--green)';
   const isVT=s.apparatus==='VT';
   const dvBadge=isVT?`<span class="badge badge-blue" style="font-size:10px;">VD ${(s.vd||s.dv||0).toFixed(1)}</span>`:`<span class="badge badge-blue" style="font-size:10px;">${DV_LETTER(s.dv)}</span>`;
@@ -3285,8 +3294,8 @@ function singleSkillCardHTML(s,idx){
   const daysLeft=s.masteryTargetDate?daysUntil(s.masteryTargetDate):null;
   const urgentColor=daysLeft!=null?(daysLeft<14?'var(--red)':daysLeft<30?'var(--yellow)':'var(--text3)'):'var(--text3)';
   const statusLabel=SK_STATUS_LABEL[s.usageStatus||'learning']||'習得中';
-  const draggable=_skillSort==='default'?`draggable="true" data-skill-id="${s.id}" data-skill-idx="${idx}"`:'';
-  return `<div class="skill-row" ${draggable} style="flex-direction:column;align-items:stretch;gap:8px;cursor:pointer;" onclick="openSkillModal('${s.id}')">
+  const dndAttrs=_skillSort==='default'?`draggable="true" data-unified-id="${s.id}"`:'';
+  return `<div class="skill-row" ${dndAttrs} style="flex-direction:column;align-items:stretch;gap:8px;cursor:pointer;" onclick="openSkillModal('${s.id}')">
     <div style="display:flex;align-items:center;gap:10px;">
       ${_skillSort==='default'?`<div style="color:var(--text3);font-size:16px;flex-shrink:0;cursor:grab;padding:0 2px;user-select:none;" onclick="event.stopPropagation()">⠿</div>`:''}
       <div style="width:36px;height:36px;border-radius:8px;background:${APP_COLORS[s.apparatus]||'#6366f1'}22;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${APP_COLORS[s.apparatus]||'#6366f1'};flex-shrink:0;">${s.apparatus}</div>
@@ -3311,8 +3320,10 @@ function _cbSkDvBadge(s){if(typeof s==='string'||!s?.dv)return '';return `<span 
 function comboCardHTML(c){
   const color=c.mastery<40?'var(--red)':c.mastery<70?'var(--yellow)':'var(--green)';
   const chain=c.skills.map((s,i)=>`${i>0?'<span class="combo-arrow">→</span>':''}${_cbSkName(s)}${_cbSkDvBadge(s)}`).join('');
-  return `<div class="skill-row" style="flex-direction:column;align-items:stretch;gap:8px;cursor:pointer;" onclick="openSkillModal('${c.id}')">
+  const dndAttrs=_skillSort==='default'?`draggable="true" data-unified-id="${c.id}"`:'';
+  return `<div class="skill-row" ${dndAttrs} style="flex-direction:column;align-items:stretch;gap:8px;cursor:pointer;" onclick="openSkillModal('${c.id}')">
     <div style="display:flex;align-items:center;gap:10px;">
+      ${_skillSort==='default'?`<div style="color:var(--text3);font-size:16px;flex-shrink:0;cursor:grab;padding:0 2px;user-select:none;" onclick="event.stopPropagation()">⠿</div>`:''}
       <div style="width:36px;height:36px;border-radius:8px;background:${APP_COLORS[c.apparatus]||'#6366f1'}22;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${APP_COLORS[c.apparatus]||'#6366f1'};flex-shrink:0;">${c.apparatus}</div>
       <div style="flex:1;min-width:0;">
         <div class="skill-name"><span class="combo-chain">${chain}</span> <span class="badge badge-green" style="font-size:10px;">+${c.cv.toFixed(1)}</span> <span style="font-size:10px;color:var(--text3);font-weight:600;">連続技</span></div>
@@ -3329,85 +3340,81 @@ function comboCardHTML(c){
   </div>`;
 }
 
-// 新技リスト DnD
-let _skillDragIdx=null;
-function initSkillDnD(container,filtered){
-  const rows=container.querySelectorAll('.skill-row[data-skill-id]');
+// 新技リスト 統合DnD（個別技・連続技両対応）
+let _uDragIdx=null;
+function initUnifiedDnD(container,sorted,allItems){
+  const rows=container.querySelectorAll('.skill-row[data-unified-id]');
+  const visibleIds=new Set(sorted.map(x=>x.id));
   rows.forEach((row,i)=>{
     row.addEventListener('dragstart',e=>{
-      _skillDragIdx=i;
-      row.style.opacity='.4';
-      e.dataTransfer.effectAllowed='move';
+      _uDragIdx=i;row.style.opacity='.4';e.dataTransfer.effectAllowed='move';
     });
     row.addEventListener('dragend',()=>{
       row.style.opacity='';
       container.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('skill-drag-over'));
     });
     row.addEventListener('dragover',e=>{
-      e.preventDefault();
-      e.dataTransfer.dropEffect='move';
+      e.preventDefault();e.dataTransfer.dropEffect='move';
       container.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('skill-drag-over'));
       row.classList.add('skill-drag-over');
     });
     row.addEventListener('dragleave',()=>row.classList.remove('skill-drag-over'));
     row.addEventListener('drop',e=>{
       e.preventDefault();
-      if(_skillDragIdx===null||_skillDragIdx===i)return;
-      const fromId=filtered[_skillDragIdx].id;
-      const toId=filtered[i].id;
-      const fromGlobal=DB.skills.findIndex(s=>s.id===fromId);
-      const toGlobal=DB.skills.findIndex(s=>s.id===toId);
-      if(fromGlobal<0||toGlobal<0)return;
-      const [moved]=DB.skills.splice(fromGlobal,1);
-      DB.skills.splice(toGlobal,0,moved);
-      saveDB();
-      renderSkillList();
+      if(_uDragIdx===null||_uDragIdx===i)return;
+      _applyUnifiedReorder(sorted,allItems,_uDragIdx,i);
+      _uDragIdx=null;
     });
-    // タッチ操作（モバイル）
-    let touchY=0,touchTimer=null;
+    // タッチDnD
+    let _touchTimer=null;
     row.addEventListener('touchstart',e=>{
-      touchY=e.touches[0].clientY;
-      touchTimer=setTimeout(()=>{
-        row.style.background='var(--surface3)';
-        row.style.boxShadow='0 4px 16px rgba(0,0,0,.25)';
-        _skillDragIdx=i;
+      _touchTimer=setTimeout(()=>{
+        row.style.background='var(--surface3)';row.style.boxShadow='0 4px 16px rgba(0,0,0,.25)';
+        _uDragIdx=i;
       },300);
     },{passive:true});
     row.addEventListener('touchmove',e=>{
-      if(_skillDragIdx===null){clearTimeout(touchTimer);return;}
+      if(_uDragIdx===null){clearTimeout(_touchTimer);return;}
       e.preventDefault();
-      const ty=e.touches[0].clientY;
-      const el=document.elementFromPoint(e.touches[0].clientX,ty);
-      const target=el?.closest('.skill-row[data-skill-id]');
+      const el=document.elementFromPoint(e.touches[0].clientX,e.touches[0].clientY);
+      const target=el?.closest('.skill-row[data-unified-id]');
       container.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('skill-drag-over'));
       if(target&&target!==row)target.classList.add('skill-drag-over');
     },{passive:false});
     row.addEventListener('touchend',e=>{
-      clearTimeout(touchTimer);
-      row.style.background='';
-      row.style.boxShadow='';
-      if(_skillDragIdx===null)return;
-      const ty=e.changedTouches[0].clientY;
-      const el=document.elementFromPoint(e.changedTouches[0].clientX,ty);
-      const target=el?.closest('.skill-row[data-skill-id]');
+      clearTimeout(_touchTimer);
+      row.style.background='';row.style.boxShadow='';
+      if(_uDragIdx===null)return;
+      const el=document.elementFromPoint(e.changedTouches[0].clientX,e.changedTouches[0].clientY);
+      const target=el?.closest('.skill-row[data-unified-id]');
       container.querySelectorAll('.skill-row').forEach(r=>r.classList.remove('skill-drag-over'));
       if(target&&target!==row){
-        const toId=target.dataset.skillId;
-        const toIdx=filtered.findIndex(s=>s.id===toId);
-        const fromId=filtered[_skillDragIdx].id;
-        const fromGlobal=DB.skills.findIndex(s=>s.id===fromId);
-        const toGlobal=DB.skills.findIndex(s=>s.id===toId);
-        if(fromGlobal>=0&&toGlobal>=0){
-          const [moved]=DB.skills.splice(fromGlobal,1);
-          DB.skills.splice(toGlobal,0,moved);
-          saveDB();
-          renderSkillList();
-        }
+        const toId=target.dataset.unifiedId;
+        const toIdx=sorted.findIndex(x=>x.id===toId);
+        if(toIdx>=0)_applyUnifiedReorder(sorted,allItems,_uDragIdx,toIdx);
       }
-      _skillDragIdx=null;
+      _uDragIdx=null;
     });
   });
 }
+function _applyUnifiedReorder(sorted,allItems,fromIdx,toIdx){
+  // 表示中アイテムの新順序を計算
+  const newVisible=[...sorted.map(x=>({id:x.id,type:x._type}))];
+  const [moved]=newVisible.splice(fromIdx,1);
+  newVisible.splice(toIdx,0,moved);
+  // 非表示アイテムはもとの相対位置を維持しながら全体順序を再構築
+  const existOrder=DB.unifiedSkillOrder||[];
+  const visIds=new Set(sorted.map(x=>x.id));
+  let vi=0;
+  const newFull=existOrder.map(o=>visIds.has(o.id)?newVisible[vi++]:o);
+  // 新規アイテム（orderに未登録）を末尾追加
+  const orderedIds=new Set(newFull.map(o=>o.id));
+  allItems.forEach(x=>{if(!orderedIds.has(x.id))newFull.push({id:x.id,type:x._type});});
+  DB.unifiedSkillOrder=newFull;
+  saveDB();renderSkillList();
+}
+// 旧DnD（後方互換）
+function initSkillDnD(container,filtered){initUnifiedDnD(container,filtered,filtered);}
 const SK_STATUS_LABEL={learning:'習得中',ready:'✅ 準備完了',using:'🏅 使用中'};
 
 // ---- SKILL TABS ----
