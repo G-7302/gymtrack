@@ -751,8 +751,11 @@ canvas{max-height:240px}
 
 <!-- PLAN -->
 <div class="page" id="page-plan">
-  <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-    <button class="btn btn-primary" onclick="openCompModal()">＋ 試合を追加</button>
+  <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;">
+    <button onclick="movePlanComp(-1)" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1;">‹</button>
+    <div id="plan-comp-indicator" style="flex:1;text-align:center;font-size:13px;color:var(--text3);"></div>
+    <button onclick="movePlanComp(1)" style="background:none;border:none;color:var(--text2);font-size:22px;cursor:pointer;padding:0 4px;line-height:1;">›</button>
+    <button class="btn btn-primary btn-sm" onclick="openCompModal()">＋ 追加</button>
   </div>
   <div id="plan-list"></div>
 </div>
@@ -3370,12 +3373,29 @@ function isCompPast(c){
   const d=new Date(c.date);d.setHours(0,0,0,0);
   return d<today;
 }
+let currentPlanIdx=0;
+function getPlanComps(){return [...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date)).filter(c=>!isCompPast(c));}
+function movePlanComp(dir){
+  const comps=getPlanComps();
+  if(!comps.length)return;
+  currentPlanIdx=Math.max(0,Math.min(comps.length-1,currentPlanIdx+dir));
+  renderPlanList();
+}
 function renderPlanList(){
   const today=localDate();
-  const sorted=[...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date));
-  const active=sorted.filter(c=>!isCompPast(c));
-  if(!active.length){document.getElementById('plan-list').innerHTML='<div class="card"><div class="empty"><div class="icon">🎯</div><p>試合を追加してください</p></div></div>';return;}
-  document.getElementById('plan-list').innerHTML=active.map(c=>planCard(c,today)).join('');
+  const comps=getPlanComps();
+  const el=document.getElementById('plan-list');
+  const ind=document.getElementById('plan-comp-indicator');
+  if(!comps.length){
+    el.innerHTML='<div class="card"><div class="empty"><div class="icon">🎯</div><p>試合を追加してください</p></div></div>';
+    if(ind)ind.textContent='';
+    return;
+  }
+  // インデックスを範囲内に収める
+  currentPlanIdx=Math.max(0,Math.min(comps.length-1,currentPlanIdx));
+  const c=comps[currentPlanIdx];
+  if(ind)ind.innerHTML=comps.map((x,i)=>`<span style="display:inline-block;width:7px;height:7px;border-radius:50%;margin:0 3px;background:${i===currentPlanIdx?'var(--accent2)':'var(--border2)'};transition:.2s;"></span>`).join('');
+  el.innerHTML=planCard(c,today);
 }
 function renderResultsPage(){
   const sorted=[...DB.competitions].sort((a,b)=>b.date.localeCompare(a.date));
