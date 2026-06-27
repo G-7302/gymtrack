@@ -660,13 +660,13 @@ canvas{max-height:240px}
 <div class="page" id="page-journal">
   <!-- タブバー -->
   <div class="journal-tabs" style="display:flex;gap:0;margin-bottom:20px;background:var(--surface);border-radius:var(--radius);padding:4px;border:1px solid var(--border);">
-    <button class="journal-tab-btn active" id="jtab-cal" onclick="setJournalTab('cal')">📅 カレンダー</button>
-    <button class="journal-tab-btn" id="jtab-log" onclick="setJournalTab('log')">📓 ログ一覧</button>
+    <button class="journal-tab-btn active" id="jtab-log" onclick="setJournalTab('log')">📓 ログ一覧</button>
     <button class="journal-tab-btn" id="jtab-week" onclick="setJournalTab('week')">📋 週次計画</button>
+    <button class="journal-tab-btn" id="jtab-cal" onclick="setJournalTab('cal')">📅 カレンダー</button>
   </div>
 
   <!-- カレンダータブ -->
-  <div id="journal-tab-cal">
+  <div id="journal-tab-cal" style="display:none;">
     <!-- 月次内省リスト（カレンダー上に表示） -->
     <div id="jcal-monthly-reviews" style="margin-bottom:16px;"></div>
     <div class="card" style="margin-bottom:20px;">
@@ -690,7 +690,7 @@ canvas{max-height:240px}
   </div>
 
   <!-- ログ一覧タブ -->
-  <div id="journal-tab-log" style="display:none;">
+  <div id="journal-tab-log">
     <div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
       <button class="btn btn-primary" onclick="openJournalModal()">＋ 新しい記録</button>
     </div>
@@ -1556,7 +1556,7 @@ function startFirebaseSync(){
       // 現在のページのみ再描画
       const cur = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
       if(cur==='dashboard') renderDashboard();
-      else if(cur==='journal') renderJournalCalendar();
+      else if(cur==='journal'){renderJournalList();renderJournalCalendar();}
       else if(cur==='plan') renderPlanList();
       else if(cur==='results') renderResultsPage();
       else if(cur==='routine') renderRoutinePage();
@@ -1672,7 +1672,7 @@ function goto(page){
   document.getElementById('page-title').textContent=PAGE_TITLES[page];
   localStorage.setItem('gymtrack_lastpage',page);
   if(page==='dashboard')renderDashboard();
-  if(page==='journal')renderJournalCalendar();
+  if(page==='journal'){setJournalTab('log');}
   if(page==='skills'){renderSkillList();renderComboList();}
   if(page==='plan')renderPlanList();
   if(page==='results')renderResultsPage();
