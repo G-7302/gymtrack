@@ -2893,7 +2893,7 @@ function openRtModal(id){
   document.getElementById('rt-memo').value=rt?rt.memo||'':'';
   if(rt)_rtResults=Object.assign({},rt.results||{});
   renderRtAppBtns();
-  openModal('modal-runthrough');
+  document.getElementById('modal-runthrough').classList.add('open');
 }
 
 function renderRtAppBtns(){
