@@ -663,11 +663,12 @@ canvas{max-height:240px}
     <button class="journal-tab-btn active" id="jtab-cal" onclick="setJournalTab('cal')">📅 カレンダー</button>
     <button class="journal-tab-btn" id="jtab-log" onclick="setJournalTab('log')">📓 ログ一覧</button>
     <button class="journal-tab-btn" id="jtab-week" onclick="setJournalTab('week')">📋 週次計画</button>
-    <button class="journal-tab-btn" id="jtab-month" onclick="setJournalTab('month')">📝 月次内省</button>
   </div>
 
   <!-- カレンダータブ -->
   <div id="journal-tab-cal">
+    <!-- 月次内省リスト（カレンダー上に表示） -->
+    <div id="jcal-monthly-reviews" style="margin-bottom:16px;"></div>
     <div class="card" style="margin-bottom:20px;">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px;">
         <button onclick="jCalMove(-1)" style="background:none;border:none;color:var(--text2);font-size:18px;cursor:pointer;padding:0 4px;">‹</button>
@@ -686,8 +687,6 @@ canvas{max-height:240px}
       </div>
       <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" ontouchstart="calResizeStart(event)" title="ドラッグ（長押しスライド）でカレンダーの高さを調整"></div>
     </div>
-    <!-- 月次内省リスト -->
-    <div id="jcal-monthly-reviews"></div>
   </div>
 
   <!-- ログ一覧タブ -->
@@ -704,10 +703,6 @@ canvas{max-height:240px}
     <div id="week-plan-view"></div>
   </div>
 
-  <!-- 月次内省タブ（モーダルで追加、カレンダー下にリスト表示なのでここは追加ボタンのみ） -->
-  <div id="journal-tab-month" style="display:none;">
-    <div id="month-review-view"></div>
-  </div>
 </div>
 
 <!-- SKILLS -->
@@ -2231,14 +2226,13 @@ function showMenuPickerFromJournal(e){
 }
 
 function setJournalTab(tab){
-  ['cal','log','week','month'].forEach(t=>{
+  ['cal','log','week'].forEach(t=>{
     document.getElementById('journal-tab-'+t).style.display=t===tab?'':'none';
     document.getElementById('jtab-'+t).classList.toggle('active',t===tab);
   });
   if(tab==='cal')renderJournalCalendar();
   if(tab==='log')renderJournalList();
   if(tab==='week')renderWeekPlanView();
-  if(tab==='month')renderMonthReviewView();
 }
 
 function onJDateChange(){
