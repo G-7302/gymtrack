@@ -1141,9 +1141,33 @@ canvas{max-height:240px}
     <!-- ▼ 連続技フィールド -->
     <div id="sk-section-combo" style="display:none;">
       <div class="form-group"><label>種目</label><select id="sk-cb-apparatus"></select></div>
-      <div class="form-group"><label>1技目 <span style="color:var(--red);font-size:11px;">必須</span></label><input type="text" id="sk-cb-s1" placeholder="例：後方2回半ひねり (D)"></div>
-      <div class="form-group"><label>2技目 <span style="color:var(--red);font-size:11px;">必須</span></label><input type="text" id="sk-cb-s2" placeholder="例：後方3回ひねり (D)"></div>
-      <div class="form-group"><label>3技目（任意）</label><input type="text" id="sk-cb-s3" placeholder=""></div>
+      <!-- 1技目 -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">1技目 <span style="color:var(--red);">必須</span></div>
+        <div class="form-group" style="margin-bottom:6px;"><input type="text" id="sk-cb-s1-name" placeholder="技名を入力"></div>
+        <div class="row" style="gap:6px;margin-bottom:0;">
+          <div class="form-group"><label>グループ</label><select id="sk-cb-s1-group"><option value="I">Ⅰ</option><option value="II">Ⅱ</option><option value="III">Ⅲ</option><option value="IV">Ⅳ</option></select></div>
+          <div class="form-group"><label>難度値</label><select id="sk-cb-s1-dv"><option value="0.1">A (0.1)</option><option value="0.2">B (0.2)</option><option value="0.3">C (0.3)</option><option value="0.4">D (0.4)</option><option value="0.5">E (0.5)</option><option value="0.6">F (0.6)</option><option value="0.7">G (0.7)</option><option value="0.8">H (0.8)</option><option value="0.9">I (0.9)</option><option value="1.0">J (1.0)</option></select></div>
+        </div>
+      </div>
+      <!-- 2技目 -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">2技目 <span style="color:var(--red);">必須</span></div>
+        <div class="form-group" style="margin-bottom:6px;"><input type="text" id="sk-cb-s2-name" placeholder="技名を入力"></div>
+        <div class="row" style="gap:6px;margin-bottom:0;">
+          <div class="form-group"><label>グループ</label><select id="sk-cb-s2-group"><option value="I">Ⅰ</option><option value="II">Ⅱ</option><option value="III">Ⅲ</option><option value="IV">Ⅳ</option></select></div>
+          <div class="form-group"><label>難度値</label><select id="sk-cb-s2-dv"><option value="0.1">A (0.1)</option><option value="0.2">B (0.2)</option><option value="0.3">C (0.3)</option><option value="0.4">D (0.4)</option><option value="0.5">E (0.5)</option><option value="0.6">F (0.6)</option><option value="0.7">G (0.7)</option><option value="0.8">H (0.8)</option><option value="0.9">I (0.9)</option><option value="1.0">J (1.0)</option></select></div>
+        </div>
+      </div>
+      <!-- 3技目 -->
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:10px;margin-bottom:8px;">
+        <div style="font-size:11px;font-weight:700;color:var(--text3);margin-bottom:8px;">3技目 <span style="font-size:10px;color:var(--text3);">任意</span></div>
+        <div class="form-group" style="margin-bottom:6px;"><input type="text" id="sk-cb-s3-name" placeholder="技名を入力（省略可）"></div>
+        <div class="row" style="gap:6px;margin-bottom:0;">
+          <div class="form-group"><label>グループ</label><select id="sk-cb-s3-group"><option value="I">Ⅰ</option><option value="II">Ⅱ</option><option value="III">Ⅲ</option><option value="IV">Ⅳ</option></select></div>
+          <div class="form-group"><label>難度値</label><select id="sk-cb-s3-dv"><option value="0.1">A (0.1)</option><option value="0.2">B (0.2)</option><option value="0.3">C (0.3)</option><option value="0.4">D (0.4)</option><option value="0.5">E (0.5)</option><option value="0.6">F (0.6)</option><option value="0.7">G (0.7)</option><option value="0.8">H (0.8)</option><option value="0.9">I (0.9)</option><option value="1.0">J (1.0)</option></select></div>
+        </div>
+      </div>
       <div class="row">
         <div class="form-group"><label>CV加点</label><select id="sk-cb-cv"><option value="0.1">+0.1</option><option value="0.2">+0.2</option></select></div>
         <div class="form-group"><label>習熟度 (%)</label><input type="number" id="sk-cb-mastery" min="0" max="100" value="50"></div>
@@ -3135,9 +3159,13 @@ function openSkillModal(editId){
     } else if(cb){
       setSkType('combo');
       document.getElementById('sk-cb-apparatus').value=cb.apparatus;
-      document.getElementById('sk-cb-s1').value=cb.skills[0]||'';
-      document.getElementById('sk-cb-s2').value=cb.skills[1]||'';
-      document.getElementById('sk-cb-s3').value=cb.skills[2]||'';
+      const fillSk=(sk,sfx)=>{
+        const obj=typeof sk==='string'?{name:sk,group:'III',dv:0.3}:(sk||{name:'',group:'III',dv:0.3});
+        document.getElementById('sk-cb-'+sfx+'-name').value=obj.name||'';
+        document.getElementById('sk-cb-'+sfx+'-group').value=obj.group||'III';
+        document.getElementById('sk-cb-'+sfx+'-dv').value=obj.dv||0.3;
+      };
+      fillSk(cb.skills[0],'s1');fillSk(cb.skills[1],'s2');fillSk(cb.skills[2]||null,'s3');
       document.getElementById('sk-cb-cv').value=cb.cv||0.1;
       document.getElementById('sk-cb-mastery').value=cb.mastery||50;
       document.getElementById('sk-cb-notes').value=cb.notes||'';
@@ -3153,9 +3181,11 @@ function openSkillModal(editId){
     document.getElementById('sk-target-date').value='';
     document.getElementById('sk-target-mastery').value=80;
     document.getElementById('sk-status').value='learning';
-    document.getElementById('sk-cb-s1').value='';
-    document.getElementById('sk-cb-s2').value='';
-    document.getElementById('sk-cb-s3').value='';
+    ['s1','s2','s3'].forEach(sfx=>{
+      document.getElementById('sk-cb-'+sfx+'-name').value='';
+      document.getElementById('sk-cb-'+sfx+'-group').value='III';
+      document.getElementById('sk-cb-'+sfx+'-dv').value='0.3';
+    });
     document.getElementById('sk-cb-mastery').value=50;
     document.getElementById('sk-cb-notes').value='';
     onSkillApparatusChange();
@@ -3167,10 +3197,12 @@ function saveSkillUnified(){
   const type=document.getElementById('sk-edit-type').value;
   const editId=document.getElementById('sk-edit-id').value;
   if(type==='combo'){
-    const s1=document.getElementById('sk-cb-s1').value.trim();
-    const s2=document.getElementById('sk-cb-s2').value.trim();
-    if(!s1||!s2){alert('1技目・2技目は必須です');return;}
-    const skills=[s1,s2,document.getElementById('sk-cb-s3').value.trim()].filter(Boolean);
+    const s1n=document.getElementById('sk-cb-s1-name').value.trim();
+    const s2n=document.getElementById('sk-cb-s2-name').value.trim();
+    if(!s1n||!s2n){alert('1技目・2技目は必須です');return;}
+    const s3n=document.getElementById('sk-cb-s3-name').value.trim();
+    const mkSk=(n,sfx)=>n?{name:n,group:document.getElementById('sk-cb-'+sfx+'-group').value,dv:+document.getElementById('sk-cb-'+sfx+'-dv').value}:null;
+    const skills=[mkSk(s1n,'s1'),mkSk(s2n,'s2'),mkSk(s3n,'s3')].filter(Boolean);
     const combo={
       id:editId||Date.now().toString(),
       apparatus:document.getElementById('sk-cb-apparatus').value,
@@ -3274,9 +3306,11 @@ function singleSkillCardHTML(s,idx){
     </div>
   </div>`;
 }
+function _cbSkName(s){return typeof s==='string'?s:(s?.name||'');}
+function _cbSkDvBadge(s){if(typeof s==='string'||!s?.dv)return '';return `<span class="badge badge-blue" style="font-size:9px;vertical-align:middle;">${DV_LETTER(s.dv)}</span>`;}
 function comboCardHTML(c){
   const color=c.mastery<40?'var(--red)':c.mastery<70?'var(--yellow)':'var(--green)';
-  const chain=c.skills.map((s,i)=>`${i>0?'<span class="combo-arrow">→</span>':''}${s}`).join('');
+  const chain=c.skills.map((s,i)=>`${i>0?'<span class="combo-arrow">→</span>':''}${_cbSkName(s)}${_cbSkDvBadge(s)}`).join('');
   return `<div class="skill-row" style="flex-direction:column;align-items:stretch;gap:8px;cursor:pointer;" onclick="openSkillModal('${c.id}')">
     <div style="display:flex;align-items:center;gap:10px;">
       <div style="width:36px;height:36px;border-radius:8px;background:${APP_COLORS[c.apparatus]||'#6366f1'}22;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;color:${APP_COLORS[c.apparatus]||'#6366f1'};flex-shrink:0;">${c.apparatus}</div>
