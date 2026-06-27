@@ -166,7 +166,7 @@ canvas{max-height:240px}
 .skill-row.skill-drag-over{border-top:2px solid var(--accent)!important;}
 
 /* ===== ROUTINE SHEET STYLES ===== */
-.routine-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.routine-grid-all{display:grid;grid-template-columns:1fr 1fr;grid-template-rows:repeat(3,auto);grid-auto-flow:column;gap:12px;margin-bottom:16px}
 .routine-app-card{background:var(--surface);border:1px solid var(--border);border-top:1px solid rgba(255,255,255,.04);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow);}
 .routine-app-header{display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-bottom:1px solid var(--border)}
 .routine-app-name{font-size:14px;font-weight:700}
@@ -337,7 +337,7 @@ canvas{max-height:240px}
   .page{display:none!important}
   #page-routine{display:block!important}
   .card,.routine-app-card{background:#fff;border:1px solid #ccc;break-inside:avoid}
-  .routine-grid{grid-template-columns:1fr 1fr;gap:8px}
+  .routine-grid-all{grid-template-columns:1fr 1fr;gap:8px}
   :root{--bg:#fff;--surface:#fff;--surface2:#f5f5f5;--border:#ccc;--text:#000;--text2:#333;--text3:#666;--accent2:#4338ca;--green:#16a34a}
   .btn-ghost,.btn-primary,.btn-sm,.btn-danger{display:none!important}
   .score-summary-card{border:1px solid #ccc;background:#f9f9f9}
@@ -558,8 +558,7 @@ canvas{max-height:240px}
   .db-cal-legend { font-size: 9px; }
 
   /* 演技構成表 */
-  .routine-grid { grid-template-columns: 1fr !important; }
-  .routine-grid-3 { grid-template-columns: 1fr !important; }
+  .routine-grid-all{grid-template-columns:1fr!important;grid-auto-flow:row!important;}
 
   /* スコアサマリー：横テーブルを隠して縦テーブルを表示 */
   .score-horiz { display: none !important; }
@@ -760,9 +759,7 @@ canvas{max-height:240px}
   <!-- スコアサマリー（一番上） -->
   <div class="score-summary-card" id="routine-total-section" style="margin-bottom:16px;padding:14px 16px;"></div>
 
-  <div class="routine-grid" id="routine-grid-top"></div>
-  <div class="routine-grid" id="routine-grid-mid"></div>
-  <div class="routine-grid" id="routine-grid-bot"></div>
+  <div class="routine-grid-all" id="routine-grid-all"></div>
 </div>
 
 <!-- ANALYSIS -->
@@ -3517,7 +3514,7 @@ function renderRoutinePage(){
   sel.innerHTML=[...DB.routines].sort((a,b)=>b.date.localeCompare(a.date)).map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
   if(!currentRoutineId&&DB.routines.length)setCurrentRoutineId(DB.routines[0].id);
   if(currentRoutineId)sel.value=currentRoutineId;
-  if(!DB.routines.length){document.getElementById('routine-name-display').textContent='構成がありません。「＋ 新規」で作成してください。';['routine-grid-top','routine-grid-mid','routine-grid-bot','routine-total-section'].forEach(id=>{document.getElementById(id).innerHTML='';});return;}
+  if(!DB.routines.length){document.getElementById('routine-name-display').textContent='構成がありません。「＋ 新規」で作成してください。';['routine-grid-all','routine-total-section'].forEach(id=>{document.getElementById(id).innerHTML='';});return;}
   const r=currentRoutine();if(!r)return;
   document.getElementById('routine-name-display').innerHTML=`
     <div style="display:flex;align-items:center;justify-content:center;gap:8px;">
@@ -3525,10 +3522,10 @@ function renderRoutinePage(){
       <button class="btn btn-ghost btn-sm" onclick="renameRoutineDialog()" title="タイトル・日付を変更" style="font-size:12px;padding:2px 6px;">✏️</button>
     </div>
     <div style="font-size:11px;color:var(--text3);font-weight:400;margin-top:2px;">${r.date}</div>`;
-  // 公式順: ゆか→あん馬→つり輪→跳馬→平行棒→鉄棒
-  document.getElementById('routine-grid-top').innerHTML=renderAppCard('FX',r)+renderAppCard('PH',r);
-  document.getElementById('routine-grid-mid').innerHTML=renderAppCard('SR',r)+renderAppCard('VT',r);
-  document.getElementById('routine-grid-bot').innerHTML=renderAppCard('PB',r)+renderAppCard('HB',r);
+  // PC: 左列=ゆか・あん馬・つり輪、右列=跳馬・平行棒・鉄棒 (grid-auto-flow:column)
+  // スマホ: DOM順に縦並び (ゆか→あん馬→つり輪→跳馬→平行棒→鉄棒)
+  document.getElementById('routine-grid-all').innerHTML=
+    ['FX','PH','SR','VT','PB','HB'].map(a=>renderAppCard(a,r)).join('');
   renderTotalTable(r);
 }
 
