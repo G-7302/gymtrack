@@ -782,6 +782,7 @@ canvas{max-height:240px}
     <button class="btn btn-ghost btn-sm" onclick="duplicateCurrentRoutine()" title="現在の構成表を複製">📋 複製</button>
     <button class="btn btn-ghost btn-sm" onclick="deleteCurrentRoutine()">🗑️</button>
     <div style="flex:1;"></div>
+    <button class="btn btn-ghost btn-sm" id="routine-show-past-btn" onclick="toggleShowPastRoutines()" title="終了した演技構成を表示/非表示">📦 終了した演技構成</button>
     <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨️ 印刷</button>
   </div>
   <div class="page-switcher-wrap no-print">
@@ -3387,22 +3388,6 @@ function isCompPast(c){
   return d<today;
 }
 
-// 終了した大会にリンクされた演技構成表を大会レコードにコピーして削除
-function archivePastRoutines(){
-  let changed=false;
-  (DB.competitions||[]).forEach(c=>{
-    if(!isCompPast(c))return;
-    if(!c.routineId)return;
-    const r=(DB.routines||[]).find(x=>x.id===c.routineId);
-    if(!r)return;
-    // スナップショットとして大会レコードに保存
-    c.routineSnapshot=JSON.parse(JSON.stringify(r));
-    // 演技構成表から削除
-    DB.routines=DB.routines.filter(x=>x.id!==r.id);
-    changed=true;
-  });
-  if(changed)saveDB();
-}
 let currentPlanIdx=0;
 function getPlanComps(){return [...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date)).filter(c=>!isCompPast(c));}
 function selectPlanComp(idx){currentPlanIdx=idx;renderPlanList();}
@@ -3441,8 +3426,7 @@ function renderResultsPage(){
   el.innerHTML=done.map(c=>resultCard(c)).join('');
 }
 function resultCard(c){
-  // DB.routines に存在しない場合はアーカイブしたスナップショットを使用
-  const r=(DB.routines||[]).find(rv=>rv.id===c.routineId)||c.routineSnapshot||null;
+  const r=(DB.routines||[]).find(rv=>rv.id===c.routineId);
   const hasRes=hasCompResults(c);
   const res=r?.results||{};
   const apps=['FX','PH','SR','VT','PB','HB'];
@@ -3690,7 +3674,7 @@ function planCard(c,todayStr){
   const practiceLeft=practiceDaysUntil(c.date);
   const isPast=days<0;
   const phase=isPast?null:calcPhase(days);
-  const linkedRoutine=c.routineId?(DB.routines||[]).find(r=>r.id===c.routineId)||c.routineSnapshot||null:c.routineSnapshot||null;
+  const linkedRoutine=c.routineId?(DB.routines||[]).find(r=>r.id===c.routineId):null;
   const targetSkills=(DB.skills||[]).filter(s=>s.targetCompetitionId===c.id);
   const readySkills=targetSkills.filter(s=>s.usageStatus==='ready'||s.usageStatus==='using');
 
@@ -3884,18 +3868,38 @@ function newRoutine(name,date){
 }
 function currentRoutine(){return DB.routines.find(r=>r.id===currentRoutineId)||null;}
 
+let _showPastRoutines=false;
+function toggleShowPastRoutines(){
+  _showPastRoutines=!_showPastRoutines;
+  const btn=document.getElementById('routine-show-past-btn');
+  if(btn)btn.style.opacity=_showPastRoutines?'1':'.5';
+  renderRoutinePage();
+}
+// 終了した大会に紐付いているルーティンのIDセットを返す
+function getPastRoutineIds(){
+  const pastIds=new Set();
+  (DB.competitions||[]).filter(c=>isCompPast(c)&&c.routineId).forEach(c=>pastIds.add(c.routineId));
+  return pastIds;
+}
 function renderRoutineSwitcher(){
   const sw=document.getElementById('routine-switcher');
   if(!sw)return;
+  const pastIds=getPastRoutineIds();
   // 近い大会順（昇順）＝左から近い順
-  const routines=[...DB.routines].sort((a,b)=>a.date.localeCompare(b.date));
+  const all=[...DB.routines].sort((a,b)=>a.date.localeCompare(b.date));
+  const active=all.filter(r=>!pastIds.has(r.id));
+  const past=all.filter(r=>pastIds.has(r.id));
+  const routines=_showPastRoutines?all:active;
   if(!routines.length){sw.innerHTML='';return;}
-  sw.innerHTML=routines.map(r=>`
-    <button class="psw-pill${r.id===currentRoutineId?' active':''}" onclick="setCurrentRoutineId('${r.id}');renderRoutinePage();">
+  sw.innerHTML=routines.map(r=>{
+    const isPast=pastIds.has(r.id);
+    return `<button class="psw-pill${r.id===currentRoutineId?' active':''}${isPast?' psw-pill-past':''}" onclick="setCurrentRoutineId('${r.id}');renderRoutinePage();" style="${isPast?'opacity:.6;':''}">
       <span class="psw-name">📋 ${r.name}</span>
-      <span class="psw-sub">${r.date}</span>
-    </button>`).join('');
-  setTimeout(()=>{const active=sw.querySelector('.psw-pill.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
+      <span class="psw-sub">${r.date}${isPast?' · 終了':''}</span>
+    </button>`;
+  }).join('');
+  // 終了した構成は末尾に集める（既にallで全部入れてる場合）
+  setTimeout(()=>{const a=sw.querySelector('.psw-pill.active');if(a)a.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
 }
 function renderRoutinePage(){
   const sel=document.getElementById('routine-select');
@@ -4809,8 +4813,6 @@ function init(){
   if(calH)document.documentElement.style.setProperty('--cal-cell-h',calH+'px');
   const savedRoutineId=localStorage.getItem('gymtrack_routine_id');
   if(savedRoutineId&&(DB.routines||[]).find(r=>r.id===savedRoutineId))currentRoutineId=savedRoutineId;
-  // 終了した大会の演技構成表を自動アーカイブ
-  archivePastRoutines();
   const lastPage=localStorage.getItem('gymtrack_lastpage');
   goto(PAGES.includes(lastPage)?lastPage:'dashboard');
   // Firebase同期開始（ローカル表示後に非同期で実行）
