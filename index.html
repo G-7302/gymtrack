@@ -2984,54 +2984,72 @@ function rtScoreOf(rt){
 
 function renderRtPage(){
   const list=[...(DB.runThroughs||[])].sort((a,b)=>b.date.localeCompare(a.date));
-  // 統計
   const statsEl=document.getElementById('rt-stats');
   const total=list.length;
   const allMaru=list.filter(r=>rtScoreOf(r)===6).length;
   const recentScores=list.slice(0,10).map(r=>rtScoreOf(r));
   const avgScore=recentScores.length?(recentScores.reduce((a,b)=>a+b,0)/recentScores.length).toFixed(1):'--';
-  const maruCounts=APPARATUS_M.map(a=>({a,cnt:list.filter(r=>(r.results||{})[a]==='○').length}));
-  const bestApp=total?maruCounts.sort((x,y)=>y.cnt-x.cnt)[0]:null;
   statsEl.innerHTML=`
     <div class="rt-stat-card"><div class="rt-stat-val">${total}</div><div class="rt-stat-label">総通し回数</div></div>
     <div class="rt-stat-card"><div class="rt-stat-val">${avgScore}</div><div class="rt-stat-label">直近10回 平均○数</div></div>
     <div class="rt-stat-card"><div class="rt-stat-val">${allMaru}</div><div class="rt-stat-label">全種目○の回数</div></div>
-    ${bestApp?`<div class="rt-stat-card"><div class="rt-stat-val" style="font-size:16px;">${COP[bestApp.a].name}</div><div class="rt-stat-label">最多○ 種目 (${bestApp.cnt}回)</div></div>`:''}
   `;
-  // テーブル
   const wrap=document.getElementById('rt-table-wrap');
   if(!list.length){
     wrap.innerHTML='<div class="empty"><div class="icon">🔄</div><p>通し記録がまだありません</p><button class="btn btn-ghost" onclick="openRtModal()" style="margin-top:8px;">最初の記録を追加</button></div>';
     return;
   }
+  // 大会別にグルーピング
+  const sorted_comps=[...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date));
+  const groups=[];
+  sorted_comps.forEach((c,i)=>{
+    const prevDate=i>0?sorted_comps[i-1].date:null;
+    const rts=list.filter(r=>{
+      if(r.date>c.date)return false;
+      if(prevDate&&r.date<=prevDate)return false;
+      return true;
+    });
+    if(rts.length)groups.push({comp:c,rts:rts.sort((a,b)=>b.date.localeCompare(a.date))});
+  });
+  // 大会に属さない記録（大会がない・最後の大会より後）
+  const lastComp=sorted_comps.length?sorted_comps[sorted_comps.length-1]:null;
+  const ungrouped=list.filter(r=>!lastComp||r.date>lastComp.date);
+  if(ungrouped.length)groups.unshift({comp:null,rts:ungrouped});
+
   const appHeaders=APPARATUS_M.map(a=>`<th style="min-width:40px;">${COP[a].name}</th>`).join('');
-  const rows=list.map(r=>{
-    const score=rtScoreOf(r);
-    const scoreColor=score===6?'#22c55e':score>=4?'#f59e0b':'#ef4444';
-    const cells=APPARATUS_M.map(a=>{
-      const v=(r.results||{})[a]||'';
-      const cls=rtResClass(v);
-      return `<td><span class="rt-res ${cls}">${rtResDisplay(v)}</span></td>`;
+  const buildTable=(rts)=>{
+    const rows=rts.map(r=>{
+      const score=rtScoreOf(r);
+      const scoreColor=score===6?'#22c55e':score>=4?'#f59e0b':'#ef4444';
+      const cells=APPARATUS_M.map(a=>{
+        const v=(r.results||{})[a]||'';
+        const cls=rtResClass(v);
+        return `<td><span class="rt-res ${cls}">${rtResDisplay(v)}</span></td>`;
+      }).join('');
+      return `<tr>
+        <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${r.date}</td>
+        ${cells}
+        <td><span class="rt-score-pill" style="background:${scoreColor}22;color:${scoreColor};">○${score}/6</span></td>
+        <td style="font-size:11px;color:var(--text2);text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.memo||''}</td>
+        <td style="white-space:nowrap;">
+          <button class="btn btn-ghost btn-sm" onclick="openRtModal('${r.id}')">✏️</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteRt('${r.id}')">🗑️</button>
+        </td>
+      </tr>`;
     }).join('');
-    return `<tr>
-      <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${r.date}</td>
-      ${cells}
-      <td><span class="rt-score-pill" style="background:${scoreColor}22;color:${scoreColor};">○${score}/6</span></td>
-      <td style="font-size:11px;color:var(--text2);text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.memo||''}</td>
-      <td style="white-space:nowrap;">
-        <button class="btn btn-ghost btn-sm" onclick="openRtModal('${r.id}')">✏️</button>
-        <button class="btn btn-danger btn-sm" onclick="deleteRt('${r.id}')">🗑️</button>
-      </td>
-    </tr>`;
+    return `<table class="rt-table"><thead><tr>
+      <th style="text-align:left;padding-left:8px;">日付</th>${appHeaders}<th>達成</th><th style="text-align:left;">メモ</th><th></th>
+    </tr></thead><tbody>${rows}</tbody></table>`;
+  };
+
+  wrap.innerHTML=groups.map(({comp,rts})=>{
+    const label=comp?`🏆 ${comp.name}（${comp.date}）に向けて`:'📋 大会未設定の記録';
+    const color=comp?'var(--accent2)':'var(--text3)';
+    return `<div style="margin-bottom:20px;">
+      <div style="font-size:13px;font-weight:700;color:${color};padding:8px 0 6px;border-bottom:2px solid var(--border);margin-bottom:8px;">${label}</div>
+      ${buildTable(rts)}
+    </div>`;
   }).join('');
-  wrap.innerHTML=`<table class="rt-table">
-    <thead><tr>
-      <th style="text-align:left;padding-left:8px;">日付</th>
-      ${appHeaders}
-      <th>達成</th><th style="text-align:left;">メモ</th><th></th>
-    </tr></thead>
-    <tbody>${rows}</tbody>
-  </table>`;
 }
 
 // ---- SKILLS ----
@@ -3537,6 +3555,78 @@ function calcRoutineScoreTable(r){
   });
 }
 
+function getRtForComp(c){
+  // この大会の準備期間に含まれる通し記録を返す
+  // 期間: 直前の大会の翌日 ～ この大会の日付
+  const sorted=[...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date));
+  const idx=sorted.findIndex(x=>x.id===c.id);
+  const prevDate=idx>0?sorted[idx-1].date:null;
+  return (DB.runThroughs||[]).filter(r=>{
+    if(r.date>c.date)return false;
+    if(prevDate&&r.date<=prevDate)return false;
+    return true;
+  }).sort((a,b)=>a.date.localeCompare(b.date));
+}
+
+function buildRtSummaryHtml(c){
+  const rts=getRtForComp(c);
+  if(!rts.length)return `<div style="font-size:12px;color:var(--text3);padding:4px 0;">この大会に向けた通し記録はまだありません。<button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openRtModal()">＋ 追加</button></div>`;
+  const total=rts.length;
+  const allMaru=rts.filter(r=>rtScoreOf(r)===6).length;
+  // 種目別○率
+  const appStats=APPARATUS_M.map(a=>{
+    const cnt=rts.filter(r=>(r.results||{})[a]==='○').length;
+    const pct=Math.round(cnt/total*100);
+    return {a,cnt,pct};
+  });
+  const worst=appStats.slice().sort((x,y)=>x.pct-y.pct)[0];
+  const best=appStats.slice().sort((x,y)=>y.pct-x.pct)[0];
+  // 直近5回のトレンド
+  const recent=rts.slice(-5);
+  const trendDots=recent.map(r=>{
+    const sc=rtScoreOf(r);
+    const col=sc===6?'#22c55e':sc>=4?'#f59e0b':'#ef4444';
+    return `<span title="${r.date} ○${sc}/6" style="display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:50%;background:${col}22;border:1.5px solid ${col};font-size:10px;font-weight:700;color:${col};">${sc}</span>`;
+  }).join('');
+  const appBars=appStats.map(({a,cnt,pct})=>{
+    const color=APP_COLORS[a]||'#6366f1';
+    const barColor=pct>=70?'#22c55e':pct>=40?'#f59e0b':'#ef4444';
+    return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px;">
+      <span style="font-size:11px;color:${color};font-weight:700;width:36px;flex-shrink:0;">${COP[a].name}</span>
+      <div style="flex:1;height:8px;background:var(--surface3);border-radius:4px;overflow:hidden;">
+        <div style="width:${pct}%;height:100%;background:${barColor};border-radius:4px;transition:width .3s;"></div>
+      </div>
+      <span style="font-size:11px;font-weight:700;color:${barColor};width:36px;text-align:right;">${pct}%</span>
+    </div>`;
+  }).join('');
+  return `
+    <div style="display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;">
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:6px 12px;text-align:center;flex:1;min-width:60px;">
+        <div style="font-size:18px;font-weight:800;color:var(--accent2);">${total}</div>
+        <div style="font-size:10px;color:var(--text3);">通し回数</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:6px 12px;text-align:center;flex:1;min-width:60px;">
+        <div style="font-size:18px;font-weight:800;color:#22c55e;">${allMaru}</div>
+        <div style="font-size:10px;color:var(--text3);">全種目○</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:6px 12px;text-align:center;flex:1;min-width:60px;">
+        <div style="font-size:11px;font-weight:700;color:#ef4444;">${COP[worst.a].name}</div>
+        <div style="font-size:18px;font-weight:800;color:#ef4444;">${worst.pct}%</div>
+        <div style="font-size:10px;color:var(--text3);">最低○率</div>
+      </div>
+      <div style="background:var(--surface2);border-radius:var(--radius-sm);padding:6px 12px;text-align:center;flex:1;min-width:60px;">
+        <div style="font-size:11px;font-weight:700;color:#22c55e;">${COP[best.a].name}</div>
+        <div style="font-size:18px;font-weight:800;color:#22c55e;">${best.pct}%</div>
+        <div style="font-size:10px;color:var(--text3);">最高○率</div>
+      </div>
+    </div>
+    <div style="margin-bottom:10px;">${appBars}</div>
+    <div style="display:flex;align-items:center;gap:6px;">
+      <span style="font-size:10px;color:var(--text3);">直近${recent.length}回:</span>
+      ${trendDots}
+    </div>`;
+}
+
 function planCard(c,todayStr){
   const today=todayStr||localDate();
   const days=daysUntil(c.date);
@@ -3710,6 +3800,16 @@ function planCard(c,todayStr){
           <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 立てる</button>
         </div>`}
     </div>`:''}
+
+    <!-- 通し記録サマリー -->
+    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+        <span style="font-size:12px;font-weight:700;color:var(--text2);">🔄 通し記録（準備期間）</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10px;" onclick="openRtModal()">＋ 追加</button>
+        <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="goto('runthrough')">一覧 →</button>
+      </div>
+      ${buildRtSummaryHtml(c)}
+    </div>
 
     ${!isPast?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">${buildCountdownCalendarsHTML(c)}</div>`:''}
   </div>`;
