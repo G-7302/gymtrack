@@ -2292,7 +2292,7 @@ function openJournalModal(editId){
   jApparatusNoteData={};
   const today=localDate();
 
-  // フォームリセット
+  // フォームリセット（前回セッションの残留データを完全クリア）
   ['j-theme','j-overall-focus','j-overall-review','j-overall-action',
    'j-warmup-focus','j-warmup-review','j-notes','j-duration',
    'j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
@@ -2300,6 +2300,13 @@ function openJournalModal(editId){
   document.getElementById('j-consult-zone').style.display='none';
   document.getElementById('j-consult-summary').style.display='none';
   const det=document.getElementById('j-constraint-details');if(det)det.removeAttribute('open');
+  // 前回セッションの種目別入力欄を空にする（DOMが残るため明示的にクリア）
+  const planC=document.getElementById('j-apparatus-plan');
+  const revC=document.getElementById('j-apparatus-review');
+  if(planC)planC.innerHTML='';
+  if(revC)revC.innerHTML='';
+  const preSummary=document.getElementById('j-pre-summary');
+  if(preSummary){preSummary.innerHTML='';preSummary.style.display='none';}
 
   let openOnReview=false;
 
@@ -2361,16 +2368,21 @@ function _applyJMode(){
   else { renderApparatusNotesReview(); renderPreSummary(); updateCondDots(); updateMentalDots(); updateAchievementDots(); }
 }
 
-// DOM から jApparatusNoteData へ退避
+// DOM から jApparatusNoteData へ退避（現在表示中のタブのフィールドのみ読み取る）
 function syncApparatusNotesFromDOM(){
   APPARATUS_M.forEach(a=>{
-    const f=document.getElementById('j-app-focus-'+a);
-    const r=document.getElementById('j-app-review-'+a);
-    const ac=document.getElementById('j-app-action-'+a);
     if(!jApparatusNoteData[a])jApparatusNoteData[a]={focus:'',review:'',action:''};
-    if(f)jApparatusNoteData[a].focus=f.value;
-    if(r)jApparatusNoteData[a].review=r.value;
-    if(ac)jApparatusNoteData[a].action=ac.value;
+    if(jMode==='plan'){
+      // 計画タブ：意識ポイントのみ
+      const f=document.getElementById('j-app-focus-'+a);
+      if(f)jApparatusNoteData[a].focus=f.value;
+    } else {
+      // 振り返りタブ：振り返り・アクションのみ（focusは読み取り専用なので触らない）
+      const r=document.getElementById('j-app-review-'+a);
+      const ac=document.getElementById('j-app-action-'+a);
+      if(r)jApparatusNoteData[a].review=r.value;
+      if(ac)jApparatusNoteData[a].action=ac.value;
+    }
   });
 }
 
