@@ -270,7 +270,6 @@ canvas{max-height:240px}
 .db-cal-cell.today .db-cal-num{color:var(--accent2);font-size:12px;}
 .db-cal-menu{font-size:10px;padding:2px 5px;border-radius:4px;background:rgba(99,102,241,.18);color:#a5b4fc;font-weight:700;display:inline-block;white-space:nowrap;margin-bottom:2px;cursor:pointer;transition:background .1s;letter-spacing:.01em;}
 .db-cal-menu:hover{background:rgba(99,102,241,.38);}
-.cal-menu-override{background:rgba(245,158,11,.3)!important;color:#fcd34d!important;}
 #menu-picker-popup{position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:8px;box-shadow:0 8px 24px rgba(0,0,0,.5);display:flex;flex-direction:column;gap:4px;min-width:130px;}
 .menu-picker-chip{padding:6px 10px;border-radius:var(--radius-sm);font-size:12px;font-weight:600;cursor:pointer;transition:background .1s;color:var(--text1);}
 .menu-picker-chip:hover{background:var(--accent);color:#fff;}
@@ -1947,7 +1946,7 @@ function buildCalendarHTML(y, m, {onDayClick='calDayClick', onMonClick='calMonCl
         ${weekBadge}
         ${hasWP?`<div class="db-cal-wp" onclick="event.stopPropagation();openWeekPlanModal('${ds}')" title="週次計画">📋</div>`:''}
         <div class="db-cal-num">${dayNum}</div>
-        <div class="db-cal-menu${isOverride?' cal-menu-override':''}" onclick="event.stopPropagation();showMenuPicker('${ds}',this)" title="メニュー変更">${menuIcon}${menuType||''}</div>
+        <div class="db-cal-menu" onclick="event.stopPropagation();showMenuPicker('${ds}',this)" title="メニュー変更">${menuIcon}${menuType||''}</div>
         ${stars?`<div class="db-cal-stars">${stars}</div>`:''}
         ${appDots?`<div class="db-cal-apps">${appDots}</div>`:''}
         ${comps.map(c=>`<div class="db-cal-comp" onclick="event.stopPropagation();" title="${c.name}">🏆${c.name}</div>`).join('')}
@@ -2261,7 +2260,7 @@ function onJDateChange(){
   refEl.innerHTML=`
     <div style="display:flex;align-items:center;gap:6px;margin-bottom:${wp&&(wp.priority1||wp.priority2)?'8px':'0'};">
       <span style="font-size:12px;color:var(--text3);">今日のメニュー</span>
-      <span onclick="showMenuPickerFromJournal(event)" style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer;background:${isOvr?'rgba(245,158,11,.2)':'rgba(99,102,241,.18)'};color:${isOvr?'var(--yellow)':'var(--accent2)'};">${icon} ${menuType} ✎</span>
+      <span onclick="showMenuPickerFromJournal(event)" style="font-size:12px;font-weight:700;padding:2px 8px;border-radius:6px;cursor:pointer;background:rgba(99,102,241,.18);color:var(--accent2);">${icon} ${menuType} ✎</span>
       ${todayDayNote?`<span style="font-size:11px;color:var(--text3);">— ${todayDayNote}</span>`:''}
     </div>
     ${wp&&(wp.priority1||wp.priority2)?`<div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:3px;">📋 今週の優先課題</div>
