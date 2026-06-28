@@ -4038,6 +4038,7 @@ function renderRoutineSwitcher(){
   setTimeout(()=>{const a=sw.querySelector('.psw-pill.active');if(a)a.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
 }
 function renderRoutinePage(){
+  const _sc=document.getElementById('content')?.scrollTop||0;
   const sel=document.getElementById('routine-select');
   const routines=[...DB.routines].sort((a,b)=>a.date.localeCompare(b.date));
   sel.innerHTML=routines.map(r=>`<option value="${r.id}">${r.name}</option>`).join('');
@@ -4055,6 +4056,7 @@ function renderRoutinePage(){
   document.getElementById('routine-grid-all').innerHTML=
     ['FX','PH','SR','VT','PB','HB'].map(a=>renderAppCard(a,r)).join('');
   renderTotalTable(r);
+  requestAnimationFrame(()=>{const c=document.getElementById('content');if(c)c.scrollTop=_sc;});
 }
 
 function setCurrentRoutineId(id){currentRoutineId=id;localStorage.setItem('gymtrack_routine_id',id||'');}
