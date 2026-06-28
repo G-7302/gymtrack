@@ -3849,6 +3849,10 @@ function buildRtSummaryHtml(c){
     </div>`;
 }
 
+// セクションラベル共通スタイル
+const _PL='font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:8px;';
+const _SEC='padding:14px 16px;border-top:1px solid var(--border);';
+
 function planCard(c,todayStr){
   const today=todayStr||localDate();
   const days=daysUntil(c.date);
@@ -3858,182 +3862,133 @@ function planCard(c,todayStr){
   const linkedRoutine=c.routineId?(DB.routines||[]).find(r=>r.id===c.routineId):null;
   const targetSkills=(DB.skills||[]).filter(s=>s.targetCompetitionId===c.id);
   const readySkills=targetSkills.filter(s=>s.usageStatus==='ready'||s.usageStatus==='using');
-
-  // 今週の週次計画を取得して表示
   const thisWeekStart=getWeekStart(today);
   const thisWP=(DB.weekPlans||[]).find(w=>w.weekStart===thisWeekStart)||null;
 
-  // 演技スコアテーブル
-  let routineScoreHtml='';
+  // ── 予定演技グリッド ──
+  let routineHtml='';
   if(linkedRoutine){
     const scores=calcRoutineScoreTable(linkedRoutine);
     const totalScore=scores.reduce((s,r)=>s+r.score,0);
-    const totalD=scores.reduce((s,r)=>s+r.dScore,0);
-    const totalE=scores.reduce((s,r)=>s+r.eScore,0);
-    const totalSB=scores.reduce((s,r)=>s+r.sb,0);
-    const apps=['FX','PH','SR','VT','PB','HB'];
-    const _lc=(txt,color='var(--text3)',bold=false)=>
-      `<td style="padding:4px 8px;font-size:11px;font-weight:${bold?700:500};color:${color};white-space:nowrap;border-right:1px solid var(--border);">${txt}</td>`;
-    const _sc=(val,color='var(--text1)',size=12,bold=true)=>
-      `<td style="padding:4px 6px;text-align:center;font-size:${size}px;font-weight:${bold?700:400};color:${color};border-right:1px solid var(--border)22;">${val}</td>`;
-    const _tc=(val,color='var(--text1)',size=13)=>
-      `<td style="padding:4px 8px;text-align:center;font-size:${size}px;font-weight:800;color:${color};border-left:2px solid var(--border);">${val}</td>`;
-    const appHeaders=apps.map(a=>`
-      <th style="text-align:center;padding:0;border-right:1px solid var(--border);">
-        <div style="background:${APP_COLORS[a]}22;color:${APP_COLORS[a]};font-size:10px;font-weight:700;padding:4px 4px;letter-spacing:.3px;border-bottom:2px solid ${APP_COLORS[a]}66;">${COP[a].name}</div>
-      </th>`).join('');
-    const targetRow=scores.map(s=>_sc(s.score.toFixed(3),'var(--text1)',12)).join('');
-    const dRow=scores.map(s=>_sc(s.dScore.toFixed(1),'#818cf8',10,false)).join('');
-    const eRow=scores.map(s=>_sc(s.eScore.toFixed(3),'var(--text2)',10,false)).join('');
-    const sbRow=scores.map(s=>_sc(s.sb>0?'+'+s.sb.toFixed(1):'—','#34d399',10,false)).join('');
-    // モバイル縦リスト（フレックスボックス）
-    const _vertRows=scores.map(s=>{
-      const color=APP_COLORS[s.app]||'#6366f1';
-      return `<div style="display:flex;align-items:center;padding:11px 14px;border-bottom:1px solid var(--border)22;">
-        <div style="display:flex;align-items:flex-start;gap:8px;flex:1;min-width:0;">
-          <span style="width:9px;height:9px;border-radius:50%;background:${color};flex-shrink:0;margin-top:4px;"></span>
-          <div>
-            <div style="font-size:13px;font-weight:700;color:${color};">${COP[s.app].name}</div>
-            <div style="font-size:12px;color:var(--text2);margin-top:2px;font-weight:600;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</div>
-          </div>
-        </div>
-        <div style="font-size:17px;font-weight:800;color:var(--text1);flex-shrink:0;">${s.score.toFixed(3)}</div>
+    // PC: 3列グリッド（6種目+合計）
+    const gridCells=scores.map(s=>{
+      const col=APP_COLORS[s.app]||'#6366f1';
+      return `<div style="background:var(--surface2);border-radius:var(--radius-sm);padding:8px 10px;border:1px solid var(--border);">
+        <div style="font-size:10px;color:${col};font-weight:700;margin-bottom:3px;">${COP[s.app].name}</div>
+        <div style="font-size:16px;font-weight:800;color:var(--text1);line-height:1;">${s.score.toFixed(3)}</div>
+        <div style="font-size:10px;color:var(--text3);margin-top:3px;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</div>
       </div>`;
     }).join('');
-    routineScoreHtml=`
-    <div style="margin-bottom:12px;">
-      <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;">
-        <span style="font-size:12px;font-weight:700;color:var(--accent2);">🤸 予定演技:</span>
-        <span style="font-size:12px;">${linkedRoutine.name}</span>
-        <button class="btn btn-ghost" style="padding:1px 6px;font-size:10px;margin-left:auto;" onclick="openRoutineById('${linkedRoutine.id}')">開く →</button>
+    // モバイル: 縦リスト
+    const vertRows=scores.map(s=>{
+      const col=APP_COLORS[s.app]||'#6366f1';
+      return `<div style="display:flex;align-items:center;padding:10px 0;border-bottom:1px solid var(--border)22;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${col};flex-shrink:0;margin-right:10px;"></span>
+        <span style="font-size:13px;font-weight:700;color:${col};min-width:44px;">${COP[s.app].name}</span>
+        <span style="font-size:11px;color:var(--text3);flex:1;">D${s.dScore.toFixed(1)} E${s.eScore.toFixed(1)}${s.sb>0?' SB+'+s.sb.toFixed(1):''}</span>
+        <span style="font-size:16px;font-weight:800;color:var(--text1);">${s.score.toFixed(3)}</span>
+      </div>`;
+    }).join('');
+    routineHtml=`<div style="${_SEC}">
+      <div style="display:flex;align-items:center;margin-bottom:10px;">
+        <div style="${_PL}margin-bottom:0;">予定演技</div>
+        <span style="font-size:12px;color:var(--text2);font-weight:600;margin-left:8px;">${linkedRoutine.name}</span>
+        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:11px;" onclick="openRoutineById('${linkedRoutine.id}')">開く →</button>
       </div>
-      <!-- PC横テーブル -->
-      <div class="score-horiz" style="overflow-x:auto;border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-      <table style="width:100%;border-collapse:collapse;min-width:400px;">
-        <thead>
-          <tr>
-            <th style="padding:0;border-right:1px solid var(--border);">
-              <div style="background:var(--surface2);padding:4px 8px;font-size:9px;color:var(--text3);text-align:left;">種目</div>
-            </th>
-            ${appHeaders}
-            <th style="padding:0;border-left:2px solid var(--border);">
-              <div style="background:var(--surface2);padding:4px 8px;font-size:9px;color:var(--text2);font-weight:700;text-align:center;">合計</div>
-            </th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr style="background:rgba(99,102,241,.07);border-top:2px solid rgba(99,102,241,.3);">
-            ${_lc('📊 目標得点','#818cf8',true)}
-            ${targetRow}
-            ${_tc(totalScore.toFixed(3),'#818cf8',13)}
-          </tr>
-          <tr style="border-top:1px solid var(--border);opacity:.7;">
-            ${_lc('D得点','var(--text3)')}
-            ${dRow}
-            ${_tc(totalD.toFixed(1),'#818cf8',10)}
-          </tr>
-          <tr style="opacity:.7;">
-            ${_lc('E目標','var(--text3)')}
-            ${eRow}
-            ${_tc(totalE.toFixed(3),'var(--text2)',10)}
-          </tr>
-          <tr style="border-bottom:none;opacity:.7;">
-            ${_lc('SB','#34d399')}
-            ${sbRow}
-            ${_tc(totalSB>0?'+'+totalSB.toFixed(1):'—','#34d399',10)}
-          </tr>
-        </tbody>
-      </table>
+      <div class="score-horiz" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        ${gridCells}
       </div>
-      <!-- モバイル縦リスト（フレックスボックス） -->
-      <div class="score-vert" style="border-radius:8px;border:1px solid var(--border);overflow:hidden;">
-        ${_vertRows}
-        <div style="display:flex;align-items:center;padding:12px 14px;background:rgba(99,102,241,.1);border-top:2px solid rgba(99,102,241,.3);">
-          <div style="flex:1;font-size:13px;font-weight:700;color:#818cf8;">合計</div>
-          <div style="font-size:19px;font-weight:800;color:#818cf8;">${totalScore.toFixed(3)}</div>
+      <div class="score-horiz" style="margin-top:6px;display:flex;align-items:center;padding:8px 10px;background:rgba(99,102,241,.08);border-radius:var(--radius-sm);border:1px solid rgba(99,102,241,.2);">
+        <span style="font-size:12px;font-weight:700;color:var(--accent2);flex:1;">合計</span>
+        <span style="font-size:18px;font-weight:800;color:var(--accent2);">${totalScore.toFixed(3)}</span>
+        ${c.targetScore?`<span style="font-size:11px;color:var(--text3);margin-left:10px;">目標 ${c.targetScore}</span>`:''}
+      </div>
+      <div class="score-vert" style="border-radius:var(--radius-sm);border:1px solid var(--border);overflow:hidden;padding:0 4px;">
+        ${vertRows}
+        <div style="display:flex;align-items:center;padding:10px 0;background:rgba(99,102,241,.08);">
+          <span style="font-size:13px;font-weight:700;color:var(--accent2);flex:1;">合計</span>
+          <span style="font-size:18px;font-weight:800;color:var(--accent2);">${totalScore.toFixed(3)}</span>
+          ${c.targetScore?`<span style="font-size:11px;color:var(--text3);margin-left:8px;">目標 ${c.targetScore}</span>`:''}
         </div>
       </div>
     </div>`;
   }
 
-  return `<div class="card" style="margin-bottom:16px;${c.isMainGoal?'border-color:var(--accent2);':''} ${today===c.date?'border-color:var(--yellow);':''}">
-    <!-- ヘッダー -->
-    <div style="display:flex;align-items:flex-start;gap:12px;margin-bottom:${c.goals?'8px':'14px'};">
-      <div style="flex:1;">
-        <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
-          <span style="font-size:16px;font-weight:800;">${c.name}</span>
-          ${c.isMainGoal?'<span class="badge badge-yellow">⭐ 主要目標</span>':''}
-          ${isPast?'<span class="badge badge-red">終了</span>':''}
+  // ── 目標新技 ──
+  const skillsHtml=targetSkills.length?`<div style="${_SEC}">
+    <div style="display:flex;align-items:center;margin-bottom:8px;">
+      <div style="${_PL}margin-bottom:0;">この大会の新技</div>
+      <span style="margin-left:8px;padding:1px 8px;border-radius:20px;font-size:10px;font-weight:700;background:rgba(34,197,94,.12);color:var(--green);">${readySkills.length}/${targetSkills.length} 準備完了</span>
+    </div>
+    ${targetSkills.map(s=>{
+      const stColor=s.mastery<40?'var(--red)':s.mastery<70?'var(--yellow)':'var(--green)';
+      const daysL=s.masteryTargetDate?daysUntil(s.masteryTargetDate):null;
+      const urg=daysL!=null?(daysL<14?'var(--red)':daysL<30?'var(--yellow)':'var(--text3)'):'var(--text3)';
+      return `<div style="display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--border)22;font-size:12px;">
+        <span style="width:8px;height:8px;border-radius:50%;background:${APP_COLORS[s.apparatus]||'#6366f1'};flex-shrink:0;"></span>
+        <span style="flex:1;min-width:0;">${s.name} <span style="color:var(--text3);">(${COP[s.apparatus]?.name||s.apparatus})</span></span>
+        <div style="display:flex;align-items:center;gap:6px;flex-shrink:0;">
+          <div class="progress-wrap" style="width:48px;"><div class="progress-bar" style="width:${s.mastery}%;background:${stColor};"></div></div>
+          <span style="font-size:11px;font-weight:700;color:${stColor};min-width:28px;">${s.mastery}%</span>
+          ${daysL!=null?`<span style="font-size:10px;color:${urg};">${daysL}日</span>`:''}
+          <span style="font-size:10px;color:var(--accent2);">${SK_STATUS_LABEL[s.usageStatus||'learning']}</span>
         </div>
-        <div style="font-size:12px;color:var(--text3);margin-top:2px;">📅 ${c.date}${c.targetScore?` · 🎯 目標スコア: <b>${c.targetScore}</b>`:''}</div>
+      </div>`;
+    }).join('')}
+  </div>`:'';
+
+  // ── 今週の課題 ──
+  const weekHtml=!isPast?`<div style="${_SEC}">
+    <div style="${_PL}">今週の優先課題</div>
+    ${thisWP?`
+      ${thisWP.priority1?`<div style="font-size:13px;font-weight:700;margin-bottom:4px;">① ${thisWP.priority1}</div>`:''}
+      ${thisWP.priority2?`<div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:6px;">② ${thisWP.priority2}</div>`:''}
+      ${thisWP.constraints?`<div style="font-size:12px;color:var(--yellow);">⚠️ 制約: ${thisWP.constraints}</div>`:''}
+    `:`<div style="font-size:12px;color:var(--text3);">今週の週次計画がありません。<button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 立てる</button></div>`}
+  </div>`:'';
+
+  // ── 通し記録 ──
+  const rtHtml=`<div style="${_SEC}">
+    <div style="display:flex;align-items:center;margin-bottom:10px;">
+      <div style="${_PL}margin-bottom:0;">通し記録（この大会期間）</div>
+      <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10px;" onclick="openRtModal()">＋ 追加</button>
+      <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="goto('runthrough')">一覧 →</button>
+    </div>
+    ${buildRtSummaryHtml(c)}
+  </div>`;
+
+  // ── カウントダウンカレンダー ──
+  const calHtml=!isPast?`<div style="${_SEC}">${buildCountdownCalendarsHTML(c)}</div>`:'';
+
+  return `<div class="card" style="margin-bottom:16px;overflow:hidden;padding:0;${c.isMainGoal?'border-color:var(--accent2);':''}${today===c.date?'border-color:var(--yellow);':''}">
+    <!-- ヘッダー -->
+    <div style="padding:16px 16px ${c.goals?'10':'14'}px;">
+      <div style="display:flex;align-items:flex-start;gap:12px;">
+        <div style="flex:1;">
+          <div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:4px;">
+            <span style="font-size:16px;font-weight:800;">${c.name}</span>
+            ${c.isMainGoal?'<span class="badge badge-yellow">⭐ 主要目標</span>':''}
+            ${isPast?'<span class="badge badge-red">終了</span>':''}
+          </div>
+          <div style="font-size:12px;color:var(--text3);">📅 ${c.date}${c.targetScore?` · 🎯 目標: <b>${c.targetScore}</b>`:''}</div>
+        </div>
+        ${!isPast?`<div style="text-align:center;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 14px;min-width:58px;border:1px solid var(--border);">
+          <div style="font-size:22px;font-weight:800;color:${phase?.color||'var(--accent2)'};line-height:1;">${days}</div>
+          <div style="font-size:10px;color:var(--text3);margin-top:2px;">日後</div>
+        </div>`:''}
+        <div style="display:flex;gap:4px;">
+          <button class="btn btn-ghost btn-sm" onclick="openCompModal('${c.id}')">✏️</button>
+          <button class="btn btn-ghost btn-sm" onclick="deleteComp('${c.id}')">🗑️</button>
+        </div>
       </div>
-      ${!isPast?`<div style="text-align:center;background:var(--surface2);border-radius:var(--radius-sm);padding:8px 12px;min-width:60px;">
-        <div style="font-size:22px;font-weight:800;color:${phase?.color||'var(--accent2)'};">${days}</div>
-        <div style="font-size:10px;color:var(--text3);">日後</div>
+      ${!isPast&&phase?`<div style="display:flex;align-items:center;gap:10px;margin-top:10px;flex-wrap:wrap;">
+        <span style="padding:2px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${phase.color};color:#fff;">${phase.label}</span>
+        <span style="font-size:12px;color:var(--text2);">${phase.desc}</span>
+        <span style="margin-left:auto;font-size:12px;color:var(--text3);">練習残り <b style="color:var(--text1);font-size:14px;">${practiceLeft}</b> 回</span>
       </div>`:''}
-      <div style="display:flex;gap:4px;">
-        <button class="btn btn-ghost btn-sm" onclick="openCompModal('${c.id}')">✏️</button>
-        <button class="btn btn-ghost btn-sm" onclick="deleteComp('${c.id}')">🗑️</button>
-      </div>
+      ${c.goals?`<div style="margin-top:10px;font-size:12px;color:var(--text2);padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent2);">${c.goals}</div>`:''}
     </div>
-
-    ${c.goals?`<div style="font-size:12px;color:var(--text2);margin-bottom:14px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent2);">${c.goals}</div>`:''}
-
-    ${!isPast&&phase?`<!-- フェーズバッジ -->
-    <div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:14px;align-items:center;">
-      <div style="padding:4px 12px;border-radius:20px;font-size:12px;font-weight:700;background:${phase.color};color:#fff;">${phase.label}</div>
-      <div style="font-size:12px;color:var(--text2);">${phase.desc}</div>
-      <div style="margin-left:auto;font-size:12px;color:var(--text3);">練習あと <b style="color:var(--text);font-size:14px;">${practiceLeft}</b> 回</div>
-    </div>`:''}
-
-    ${routineScoreHtml}
-
-    ${targetSkills.length?`<!-- 対象新技 -->
-    <div style="margin-bottom:12px;">
-      <div style="font-size:11px;font-weight:700;color:var(--text2);margin-bottom:6px;">⚡ この大会で使いたい新技（${readySkills.length}/${targetSkills.length} 準備完了）</div>
-      <div style="display:flex;flex-direction:column;gap:4px;">
-        ${targetSkills.map(s=>{
-          const daysL=s.masteryTargetDate?daysUntil(s.masteryTargetDate):null;
-          const urg=daysL!=null?(daysL<14?'var(--red)':daysL<30?'var(--yellow)':'var(--text3)'):'var(--text3)';
-          const stColor=s.mastery<40?'var(--red)':s.mastery<70?'var(--yellow)':'var(--green)';
-          return `<div style="display:flex;align-items:center;gap:8px;font-size:12px;padding:4px 0;border-bottom:1px solid var(--border);">
-            <span style="color:${stColor};font-weight:700;">${s.mastery}%</span>
-            <div class="progress-wrap" style="width:60px;"><div class="progress-bar" style="width:${s.mastery}%;background:${stColor};"></div></div>
-            <span style="flex:1;">${s.name} <span style="color:var(--text3);">(${COP[s.apparatus]?.name||s.apparatus})</span></span>
-            ${daysL!=null?`<span style="color:${urg};font-size:11px;">目標まで${daysL}日</span>`:''}
-            <span style="font-size:10px;color:var(--accent2);">${SK_STATUS_LABEL[s.usageStatus||'learning']}</span>
-          </div>`;
-        }).join('')}
-      </div>
-    </div>`:''}
-
-    <!-- 今週の優先課題（週次計画から引用） -->
-    ${!isPast?`<div style="margin-bottom:12px;">
-      ${thisWP?(
-        `<div style="background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:11px 14px;">
-          <div style="font-size:10px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.08em;margin-bottom:8px;">📋 今週の優先課題</div>
-          ${thisWP.priority1?`<div style="font-size:13px;font-weight:700;margin-bottom:4px;">① ${thisWP.priority1}</div>`:''}
-          ${thisWP.priority2?`<div style="font-size:13px;font-weight:600;color:var(--text2);margin-bottom:6px;">② ${thisWP.priority2}</div>`:''}
-          ${thisWP.constraints?`<div style="font-size:12px;color:var(--yellow);margin-top:4px;">⚠️ 制約: ${thisWP.constraints}</div>`:''}
-          ${thisWP.phase?`<div style="margin-top:8px;"><span style="display:inline-block;padding:2px 10px;border-radius:20px;font-size:11px;font-weight:700;background:var(--accent);color:#fff;">${PHASE_LABELS[thisWP.phase]||thisWP.phase}</span></div>`:''}
-        </div>`
-      ):`<div style="font-size:12px;color:var(--text3);padding:10px 0;">
-          今週の週次計画がありません。
-          <button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 立てる</button>
-        </div>`}
-    </div>`:''}
-
-    <!-- 通し記録サマリー -->
-    <div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
-        <span style="font-size:12px;font-weight:700;color:var(--text2);">🔄 通し記録（準備期間）</span>
-        <button class="btn btn-ghost btn-sm" style="margin-left:auto;font-size:10px;" onclick="openRtModal()">＋ 追加</button>
-        <button class="btn btn-ghost btn-sm" style="font-size:10px;" onclick="goto('runthrough')">一覧 →</button>
-      </div>
-      ${buildRtSummaryHtml(c)}
-    </div>
-
-    ${!isPast?`<div style="margin-top:12px;border-top:1px solid var(--border);padding-top:12px;">${buildCountdownCalendarsHTML(c)}</div>`:''}
+    ${routineHtml}${skillsHtml}${weekHtml}${rtHtml}${calHtml}
   </div>`;
 }
 function deleteComp(id){if(!confirm('削除しますか？'))return;DB.competitions=DB.competitions.filter(c=>c.id!==id);saveDB();renderPlanList();}
