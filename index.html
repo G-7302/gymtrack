@@ -3085,13 +3085,12 @@ function renderRtPage(){
         const cls=rtResClass(v);
         return `<td><span class="rt-res ${cls}">${rtResDisplay(v)}</span></td>`;
       }).join('');
-      return `<tr>
+      return `<tr onclick="openRtModal('${r.id}')" style="cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
         <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${r.date}</td>
         ${cells}
         <td><span class="rt-score-pill" style="background:${scoreColor}22;color:${scoreColor};">○${score}/6</span></td>
         <td style="font-size:11px;color:var(--text2);text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.memo||''}</td>
-        <td style="white-space:nowrap;">
-          <button class="btn btn-ghost btn-sm" onclick="openRtModal('${r.id}')">✏️</button>
+        <td style="white-space:nowrap;" onclick="event.stopPropagation()">
           <button class="btn btn-danger btn-sm" onclick="deleteRt('${r.id}')">🗑️</button>
         </td>
       </tr>`;
