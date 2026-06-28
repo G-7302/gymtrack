@@ -4838,8 +4838,14 @@ function addManualSkillToRoutine(){
   }
   document.getElementById('manual-skill-name').value='';
   document.getElementById('manual-autocomplete').style.display='none';
+  document.getElementById('picker-confirm-zone').classList.remove('has-selection');
+  document.getElementById('picker-confirm-label').innerHTML='<span>上のリストから選ぶか、技名を直接入力してください</span>';
   _pickerSelectedId=null;
-  saveDB();closeModal('modal-picker');renderRoutinePage();
+  saveDB();renderRoutinePage();
+  // 「追加しました」フィードバックを一瞬表示
+  const btn=document.getElementById('picker-add-btn');
+  const orig=btn.textContent;btn.textContent='✓ 追加しました';btn.disabled=true;
+  setTimeout(()=>{btn.textContent=orig;btn.disabled=false;},1000);
 }
 function manualAutocomplete(q){
   const ac=document.getElementById('manual-autocomplete');
