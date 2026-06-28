@@ -1637,7 +1637,9 @@ function loadDB(){
   const s=localStorage.getItem('gymtrack_v2');
   if(s){try{DB={...DB,...JSON.parse(s)};}catch(e){}}
 }
+let _lastLocalSave=0;
 function saveDB(){
+  _lastLocalSave=Date.now();
   // localStorageに即時保存
   localStorage.setItem('gymtrack_v2', JSON.stringify(DB));
   // Firebaseにデバウンス保存（連続操作で叩きすぎないよう500ms待つ）
@@ -1678,6 +1680,8 @@ function startFirebaseSync(){
     FB_REF.on('value', snap=>{
       const d = snap.val();
       if(!d) return;
+      // ローカル保存直後（2秒以内）はFirebase側の古いデータで上書きしない
+      if(Date.now()-_lastLocalSave<2000) return;
       DB = {...DB, ...d};
       localStorage.setItem('gymtrack_v2', JSON.stringify(DB));
       setSyncStatus('synced');
@@ -4034,7 +4038,7 @@ function renderRoutineSwitcher(){
     </button>`;
   }).join('');
   // 終了した構成は末尾に集める（既にallで全部入れてる場合）
-  setTimeout(()=>{const a=sw.querySelector('.psw-pill.active');if(a)a.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
+  setTimeout(()=>{const a=sw.querySelector('.psw-pill.active');if(a){const s=document.getElementById('routine-switcher');s.scrollLeft=a.offsetLeft-s.offsetWidth/2+a.offsetWidth/2;}},50);
 }
 function renderRoutinePage(){
   const _content=document.getElementById('content');
