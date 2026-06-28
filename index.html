@@ -1595,7 +1595,8 @@ let DB = {
   dayOverrides:{},     // {dateStr: menuType} — 特定日付のメニュー上書き
   events:[],           // [{id,date,title,note,color}] — 練習外の予定
   compWeekPlans:{},    // {`${compId}_${weekStart}`: {notes, linkedWeekPlanId}} — 試合逆算週次メモ
-  unifiedSkillOrder:[] // [{id,type}] — 新技リスト統合並び順
+  unifiedSkillOrder:[], // [{id,type}] — 新技リスト統合並び順
+  customRoutineSkills:{} // {FX:[{id,nameJa,eg,dv}], PH:[...], ...} — 手入力カスタム技
 };
 let charts={}, journalCondition=0, journalMental=0, journalApparatus=new Set(), skillFilter='ALL', comboFilter='ALL', skillTabMode='single', _skillSort='default';
 let pickerState={apparatus:'FX',eg:'ALL',callback:null};
@@ -4671,9 +4672,28 @@ function openVaultPicker(slot){
   document.getElementById('modal-picker').classList.add('open');
 }
 function setPickerEG(eg){pickerEG=eg;document.querySelectorAll('.picker-tab').forEach(t=>{t.classList.toggle('active',t.textContent.includes(eg==='ALL'?'全EG':EG_ROMAN[eg]));});renderPickerList();}
+function deleteCustomSkill(app,id,e){
+  e.stopPropagation();
+  DB.customRoutineSkills[app]=(DB.customRoutineSkills[app]||[]).filter(x=>x.id!==id);
+  saveDB();renderPickerList();
+}
 function renderPickerList(){
   const q=(document.getElementById('picker-search').value||'').toLowerCase();
   const app=COP[pickerApp];
+  // カスタム技セクション（VT以外）
+  const customs=(pickerApp!=='VT'&&DB.customRoutineSkills?.[pickerApp]||[]).filter(s=>!q||s.nameJa.toLowerCase().includes(q));
+  const customHtml=customs.length?`
+    <div style="font-size:10px;font-weight:700;color:var(--text3);padding:6px 8px 4px;letter-spacing:.05em;">📝 手入力カスタム技</div>
+    ${customs.map(s=>`<div class="picker-skill-item" onclick="fillPickerFormCustom('${s.id}','${s.eg}',${s.dv},'${s.dvL}','${s.nameJa.replace(/'/g,"\\'")}')">
+      <div class="picker-dv-badge dv-${s.dvL}" style="background:${APP_COLORS[pickerApp]}22;">${s.dvL}</div>
+      <div style="flex:1;">
+        <div class="picker-skill-name">${s.nameJa}</div>
+        <div class="picker-skill-eg">EG ${EG_ROMAN[s.eg]} · ${(+s.dv).toFixed(1)} <span style="color:var(--accent2);font-size:10px;">カスタム</span></div>
+      </div>
+      <button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 6px;" onclick="deleteCustomSkill('${pickerApp}','${s.id}',event)">✕</button>
+    </div>`).join('')}
+    <div style="border-top:1px solid var(--border);margin:6px 0 4px;"></div>
+  `:'';
   let items=[];
   if(pickerApp==='VT'){
     items=(app.vaults||[]).filter(v=>!q||v.ja.toLowerCase().includes(q));
@@ -4693,7 +4713,7 @@ function renderPickerList(){
       if(pickerEG!=='ALL'&&eg!==pickerEG)return;
       skills.filter(s=>!q||s.ja.toLowerCase().includes(q)).forEach(s=>{items.push({...s,eg});});
     });
-    document.getElementById('picker-list').innerHTML=items.map(s=>{
+    document.getElementById('picker-list').innerHTML=customHtml+items.map(s=>{
       const ov=(DB.skillOverrides||{})[s.id]||{};
       const displayName=(DB.skillNames||{})[s.id]||s.ja;
       const displayEG=ov.eg||s.eg;
@@ -4708,8 +4728,17 @@ function renderPickerList(){
           <div class="picker-skill-eg">EG ${EG_ROMAN[displayEG]} · ${(+displayDV).toFixed(1)}${customBadge}</div>
         </div>
       </div>`;
-    }).join('')||'<div class="empty" style="padding:20px;"><p>該当なし</p></div>';
+    }).join('')||(!customs.length?'<div class="empty" style="padding:20px;"><p>該当なし</p></div>':'');
   }
+}
+function fillPickerFormCustom(custId,eg,dv,dvL,name){
+  _pickerSelectedId=null; // カスタム技はCoPのIDを持たない
+  document.getElementById('manual-skill-name').value=name;
+  document.getElementById('manual-skill-eg').value=eg;
+  document.getElementById('manual-skill-dv').value=dv;
+  document.getElementById('picker-confirm-zone').classList.add('has-selection');
+  document.getElementById('picker-confirm-label').innerHTML='<span class="dot"></span>内容を確認・編集して「追加」を押してください';
+  document.getElementById('manual-skill-name').focus();
 }
 let _pickerSelectedId=null; // 現在選択中のCoP技ID
 
@@ -4834,7 +4863,17 @@ function addManualSkillToRoutine(){
   } else {
     const eg=document.getElementById('manual-skill-eg').value;
     const dv=+document.getElementById('manual-skill-dv').value;
-    r[pickerApp].elements.push({id:Date.now().toString(),nameJa:name,eg,dv,dvL:DV_LETTER(dv),cv:0});
+    const newId=Date.now().toString();
+    r[pickerApp].elements.push({id:newId,nameJa:name,eg,dv,dvL:DV_LETTER(dv),cv:0});
+    // リストから選ばず手入力した場合 → カスタム技として保存
+    if(!_pickerSelectedId){
+      if(!DB.customRoutineSkills)DB.customRoutineSkills={};
+      if(!DB.customRoutineSkills[pickerApp])DB.customRoutineSkills[pickerApp]=[];
+      // 同名重複は除く
+      if(!DB.customRoutineSkills[pickerApp].find(x=>x.nameJa===name&&x.eg===eg&&x.dv===dv)){
+        DB.customRoutineSkills[pickerApp].push({id:'cust_'+newId,nameJa:name,eg,dv,dvL:DV_LETTER(dv)});
+      }
+    }
   }
   document.getElementById('manual-skill-name').value='';
   document.getElementById('manual-autocomplete').style.display='none';
