@@ -283,6 +283,9 @@ canvas{max-height:240px}
 .j-fmt-btn:hover,.j-fmt-btn:active{background:var(--surface3);}
 /* オートセーブ表示 */
 .j-autosave-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-left:6px;opacity:0;transition:opacity .3s;}
+/* 右クリックメニュー */
+.j-ctx-item{display:flex;align-items:center;gap:8px;width:100%;padding:7px 12px;background:none;border:none;color:var(--text1);font-size:13px;font-family:inherit;cursor:pointer;border-radius:var(--radius-xs);text-align:left;white-space:nowrap;}
+.j-ctx-item:hover{background:var(--surface2);}
 /* 統一ページスイッチャー */
 .page-switcher-wrap{position:relative;margin-bottom:16px;}
 .page-switcher{display:flex;overflow-x:auto;gap:8px;padding:4px 2px 10px;scrollbar-width:none;-ms-overflow-style:none;}
@@ -1308,6 +1311,16 @@ canvas{max-height:240px}
   </div>
 </div>
 
+<!-- 書式コンテキストメニュー -->
+<div id="j-ctx-menu" style="display:none;position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);padding:4px;min-width:130px;">
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('bold')"><b>B</b> 太字</button>
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#ef4444')"><span style="color:#ef4444;font-weight:700;">A</span> 赤</button>
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#3b82f6')"><span style="color:#3b82f6;font-weight:700;">A</span> 青</button>
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#22c55e')"><span style="color:#22c55e;font-weight:700;">A</span> 緑</button>
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#f59e0b')"><span style="color:#f59e0b;font-weight:700;">A</span> 黄</button>
+  <div style="border-top:1px solid var(--border);margin:3px 0;"></div>
+  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('removeFormat')">✕ 書式を消す</button>
+</div>
 <!-- Combo Modal -->
 <div class="modal-overlay" id="modal-combo">
   <div class="modal" style="width:500px;">
@@ -2496,6 +2509,35 @@ function openJournalModal(editId){
   setTimeout(setupTouchResize,100);
 }
 
+// ── 書式コンテキストメニュー ──
+(function(){
+  document.addEventListener('contextmenu',e=>{
+    if(!e.target.closest('#modal-journal'))return;
+    const field=e.target.closest('.rich-field');
+    if(!field)return;
+    e.preventDefault();
+    const menu=document.getElementById('j-ctx-menu');
+    menu.style.display='';
+    let x=e.clientX,y=e.clientY;
+    requestAnimationFrame(()=>{
+      const r=menu.getBoundingClientRect();
+      if(x+r.width>window.innerWidth)x=window.innerWidth-r.width-8;
+      if(y+r.height>window.innerHeight)y=window.innerHeight-r.height-8;
+      menu.style.left=x+'px';menu.style.top=y+'px';
+    });
+  });
+  document.addEventListener('click',e=>{
+    if(!e.target.closest('#j-ctx-menu'))document.getElementById('j-ctx-menu').style.display='none';
+  });
+  document.addEventListener('keydown',e=>{
+    if(e.key==='Escape')document.getElementById('j-ctx-menu').style.display='none';
+  });
+})();
+function jCtxFmt(cmd,val){
+  document.getElementById('j-ctx-menu').style.display='none';
+  if(cmd==='color')document.execCommand('foreColor',false,val);
+  else document.execCommand(cmd,false,null);
+}
 // ── オートセーブ ──
 let _jAutoSaveTimer=null;
 function scheduleAutoSave(){
@@ -2591,7 +2633,7 @@ function renderApparatusNotesPlan(){
     return `<div style="border-left:3px solid ${color};padding:0 0 4px 12px;margin-bottom:14px;">
       <div style="font-size:13px;font-weight:700;color:${color};margin-bottom:8px;">${name}</div>
       <div class="form-group" style="margin-bottom:0;"><label>意識ポイント</label>
-        <input type="text" id="j-app-focus-${a}" value="${escAttr(d.focus)}" placeholder="例：肘を伸ばした支持を意識する"></div>
+        <textarea id="j-app-focus-${a}" placeholder="例：肘を伸ばした支持を意識する" style="min-height:44px;resize:vertical;" oninput="scheduleAutoSave()">${escAttr(d.focus)}</textarea></div>
     </div>`;
   }).join('');
 }
@@ -2613,9 +2655,9 @@ function renderApparatusNotesReview(){
       <div style="font-size:13px;font-weight:700;color:${color};margin-bottom:8px;">${name}</div>
       ${d.focus?`<div style="font-size:11px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius-xs);margin-bottom:10px;line-height:1.5;">👁 ${escAttr(d.focus)}</div>`:''}
       <div class="form-group" style="margin-bottom:8px;"><label>振り返り</label>
-        <input type="text" id="j-app-review-${a}" value="${escAttr(d.review)}" placeholder="例：3セット中2セット成功。疲れると崩れやすい"></div>
+        <textarea id="j-app-review-${a}" placeholder="例：3セット中2セット成功。疲れると崩れやすい" style="min-height:44px;resize:vertical;" oninput="scheduleAutoSave()">${escAttr(d.review)}</textarea></div>
       <div class="form-group" style="margin-bottom:0;"><label>次のアクション</label>
-        <input type="text" id="j-app-action-${a}" value="${escAttr(d.action)}" placeholder="例：疲労時の練習を意識的に組み込む"></div>
+        <textarea id="j-app-action-${a}" placeholder="例：疲労時の練習を意識的に組み込む" style="min-height:44px;resize:vertical;" oninput="scheduleAutoSave()">${escAttr(d.action)}</textarea></div>
     </div>`;
   }).join('');
 }
