@@ -273,6 +273,16 @@ canvas{max-height:240px}
 /* Journal tabs */
 .journal-tab-btn{flex:1;padding:8px 4px;border:none;background:transparent;color:var(--text2);font-size:12px;font-weight:600;cursor:pointer;border-radius:calc(var(--radius) - 4px);transition:all .15s;font-family:inherit}
 .journal-tab-btn.active{background:var(--accent);color:#fff}
+/* リッチテキストフィールド */
+.rich-field{background:var(--bg);border:1px solid var(--border);border-radius:var(--radius-sm);padding:10px 12px;min-height:44px;max-height:400px;font-size:14px;color:var(--text1);line-height:1.6;outline:none;word-break:break-word;overflow-wrap:break-word;cursor:text;overflow-y:auto;resize:vertical;font-family:inherit;}
+.rich-field:focus{border-color:var(--accent);box-shadow:0 0 0 2px rgba(99,102,241,.12);}
+.rich-field:empty::before{content:attr(data-ph);color:var(--text3);pointer-events:none;display:block;}
+/* 書式ツールバー */
+.j-fmt-bar{display:flex;gap:4px;align-items:center;padding:5px 0 8px;flex-wrap:wrap;border-bottom:1px solid var(--border);margin-bottom:10px;}
+.j-fmt-btn{padding:3px 9px;border-radius:var(--radius-sm);background:var(--surface2);border:1px solid var(--border);cursor:pointer;font-size:13px;line-height:1.4;color:var(--text1);font-family:inherit;transition:background .1s;}
+.j-fmt-btn:hover,.j-fmt-btn:active{background:var(--surface3);}
+/* オートセーブ表示 */
+.j-autosave-dot{width:6px;height:6px;border-radius:50%;background:var(--green);display:inline-block;margin-left:6px;opacity:0;transition:opacity .3s;}
 /* 統一ページスイッチャー */
 .page-switcher-wrap{position:relative;margin-bottom:16px;}
 .page-switcher{display:flex;overflow-x:auto;gap:8px;padding:4px 2px 10px;scrollbar-width:none;-ms-overflow-style:none;}
@@ -869,8 +879,18 @@ canvas{max-height:240px}
       <button class="journal-tab-btn" id="jmode-review-btn" onclick="setJMode('review')">🌙 練習振り返り</button>
     </div>
 
+    <!-- 書式ツールバー -->
+    <div class="j-fmt-bar">
+      <button type="button" class="j-fmt-btn" style="font-weight:900;" onmousedown="event.preventDefault();document.execCommand('bold')">B</button>
+      <button type="button" class="j-fmt-btn" style="color:#ef4444;font-weight:700;" onmousedown="event.preventDefault();document.execCommand('foreColor',false,'#ef4444')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#3b82f6;font-weight:700;" onmousedown="event.preventDefault();document.execCommand('foreColor',false,'#3b82f6')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#22c55e;font-weight:700;" onmousedown="event.preventDefault();document.execCommand('foreColor',false,'#22c55e')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#f59e0b;font-weight:700;" onmousedown="event.preventDefault();document.execCommand('foreColor',false,'#f59e0b')">A</button>
+      <button type="button" class="j-fmt-btn" style="font-size:11px;" onmousedown="event.preventDefault();document.execCommand('removeFormat')">✕書式</button>
+      <span style="margin-left:auto;font-size:11px;color:var(--text3);" id="j-autosave-label"></span>
+    </div>
     <!-- 共通: 日付・種目 -->
-    <div class="form-group"><label>日付</label><input type="date" id="j-date" onchange="onJDateChange()"></div>
+    <div class="form-group"><label>日付</label><input type="date" id="j-date" onchange="onJDateChange();scheduleAutoSave()"></div>
     <div class="form-group"><label>練習種目（複数可）</label><div id="j-apparatus-chips" class="app-chips"></div></div>
 
     <!-- ════════════ 練習計画パネル ════════════ -->
@@ -879,11 +899,11 @@ canvas{max-height:240px}
       <div id="j-week-ref" style="display:none;margin-bottom:14px;padding:10px 14px;background:rgba(99,102,241,.07);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;font-size:12px;line-height:1.7;"></div>
 
       <div class="journal-section-header">🎯 今日のフォーカス</div>
-      <div class="form-group"><label>今日のテーマ</label><input type="text" id="j-theme" placeholder="例：後転とびの踏み切りタイミングを固める"></div>
-      <div class="form-group"><label>全体の意識ポイント</label><input type="text" id="j-overall-focus" placeholder="例：踏み切りで膝をしっかり伸ばす"></div>
+      <div class="form-group"><label>今日のテーマ</label><div contenteditable="true" id="j-theme" class="rich-field" data-ph="例：後転とびの踏み切りタイミングを固める" oninput="scheduleAutoSave()"></div></div>
+      <div class="form-group"><label>全体の意識ポイント</label><div contenteditable="true" id="j-overall-focus" class="rich-field" data-ph="例：踏み切りで膝をしっかり伸ばす" oninput="scheduleAutoSave()"></div></div>
 
       <div class="journal-section-header">🔄 アップ</div>
-      <div class="form-group"><label>意識ポイント</label><input type="text" id="j-warmup-focus" placeholder="例：肩甲骨の可動域を意識して動かす"></div>
+      <div class="form-group"><label>意識ポイント</label><div contenteditable="true" id="j-warmup-focus" class="rich-field" data-ph="例：肩甲骨の可動域を意識して動かす" oninput="scheduleAutoSave()"></div></div>
 
       <div class="journal-section-header">🤸 種目別・意識ポイント</div>
       <div id="j-apparatus-plan">
@@ -922,7 +942,7 @@ canvas{max-height:240px}
       <div id="j-pre-summary" style="display:none;margin-bottom:14px;padding:12px 14px;background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;"></div>
 
       <div class="journal-section-header">📊 実績</div>
-      <div class="form-group"><label>練習時間（分）</label><input type="number" id="j-duration" min="0" placeholder="例：120"></div>
+      <div class="form-group"><label>練習時間（分）</label><input type="number" id="j-duration" min="0" placeholder="例：120" oninput="scheduleAutoSave()"></div>
       <div class="form-group"><label>体調（1〜5）</label>
         <div class="cond-dots" id="j-condition-dots">
           <div class="cond-dot" onclick="setCondition(1)" data-v="1">1</div>
@@ -943,8 +963,8 @@ canvas{max-height:240px}
       </div>
 
       <div class="journal-section-header">💬 振り返り</div>
-      <div class="form-group"><label>全体の振り返り</label><input type="text" id="j-overall-review" placeholder="例：3本中2本決まった。踏み切り位置が安定してきた"></div>
-      <div class="form-group"><label>次のアクション</label><input type="text" id="j-overall-action" placeholder="例：通しに組み込んで本番に近い状況で確認する"></div>
+      <div class="form-group"><label>全体の振り返り</label><div contenteditable="true" id="j-overall-review" class="rich-field" data-ph="例：3本中2本決まった。踏み切り位置が安定してきた" oninput="scheduleAutoSave()"></div></div>
+      <div class="form-group"><label>次のアクション</label><div contenteditable="true" id="j-overall-action" class="rich-field" data-ph="例：通しに組み込んで本番に近い状況で確認する" oninput="scheduleAutoSave()"></div></div>
       <div class="form-group"><label>達成度</label>
         <div class="cond-dots" id="j-achievement-dots">
           <div class="cond-dot" onclick="setAchievement(1)" data-v="1">★1</div>
@@ -956,7 +976,7 @@ canvas{max-height:240px}
       </div>
 
       <div class="journal-section-header">🔄 アップ</div>
-      <div class="form-group"><label>振り返り・アクション</label><input type="text" id="j-warmup-review" placeholder="例：体がよく動いた。次回も同じルーティンで"></div>
+      <div class="form-group"><label>振り返り・アクション</label><div contenteditable="true" id="j-warmup-review" class="rich-field" data-ph="例：体がよく動いた。次回も同じルーティンで" oninput="scheduleAutoSave()"></div></div>
 
       <div class="journal-section-header">🤸 種目別・振り返り</div>
       <div id="j-apparatus-review">
@@ -969,7 +989,7 @@ canvas{max-height:240px}
         <div class="rt-btn-group" id="j-rt-app-btns"></div>
       </div>
 
-      <div class="form-group"><label>メモ・その他気づき</label><textarea id="j-notes" style="min-height:50px;"></textarea></div>
+      <div class="form-group"><label>メモ・その他気づき</label><div contenteditable="true" id="j-notes" class="rich-field" data-ph="気づき・感想など" style="min-height:70px;" oninput="scheduleAutoSave()"></div></div>
       <div class="form-group"><label>練習した技（チェックで+2%）</label>
         <div id="j-skill-checkboxes" style="max-height:120px;overflow-y:auto;background:var(--bg);border-radius:var(--radius-sm);padding:10px;border:1px solid var(--border);"></div>
       </div>
@@ -2419,8 +2439,8 @@ function openJournalModal(editId){
 
   // フォームリセット（前回セッションの残留データを完全クリア）
   ['j-theme','j-overall-focus','j-overall-review','j-overall-action',
-   'j-warmup-focus','j-warmup-review','j-notes','j-duration',
-   'j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
+   'j-warmup-focus','j-warmup-review','j-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ['j-duration','j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('j-edit-id').value=editId||'';
   document.getElementById('j-consult-zone').style.display='none';
   document.getElementById('j-consult-summary').style.display='none';
@@ -2444,13 +2464,13 @@ function openJournalModal(editId){
       journalCondition=j.condition||0;
       journalMental=j.mental||0;
       journalAchievement=j.achievement||0;
-      document.getElementById('j-theme').value=j.theme||'';
-      document.getElementById('j-overall-focus').value=j.overallFocus||j.focusPoints||'';
-      document.getElementById('j-overall-review').value=j.overallReview||j.goodPoints||'';
-      document.getElementById('j-overall-action').value=j.overallAction||j.nextAction||'';
-      document.getElementById('j-warmup-focus').value=j.warmupFocus||'';
-      document.getElementById('j-warmup-review').value=j.warmupReview||'';
-      document.getElementById('j-notes').value=j.notes||'';
+      document.getElementById('j-theme').innerHTML=j.theme||'';
+      document.getElementById('j-overall-focus').innerHTML=j.overallFocus||j.focusPoints||'';
+      document.getElementById('j-overall-review').innerHTML=j.overallReview||j.goodPoints||'';
+      document.getElementById('j-overall-action').innerHTML=j.overallAction||j.nextAction||'';
+      document.getElementById('j-warmup-focus').innerHTML=j.warmupFocus||'';
+      document.getElementById('j-warmup-review').innerHTML=j.warmupReview||'';
+      document.getElementById('j-notes').innerHTML=j.notes||'';
       document.getElementById('j-constraints').value=j.constraints||'';
       if(j.constraints){document.getElementById('j-consult-zone').style.display='';if(det)det.setAttribute('open','');}
       ['c1','c2','c3','c4'].forEach(k=>{const el=document.getElementById('j-'+k);if(el)el.value=j.consultAnswers?.[{c1:'weeksToComp',c2:'canDo',c3:'priority',c4:'sensation'}[k]]||'';});
@@ -2474,6 +2494,39 @@ function openJournalModal(editId){
   _applyJMode();
   document.getElementById('modal-journal').classList.add('open');
   setTimeout(setupTouchResize,100);
+}
+
+// ── オートセーブ ──
+let _jAutoSaveTimer=null;
+function scheduleAutoSave(){
+  clearTimeout(_jAutoSaveTimer);
+  _jAutoSaveTimer=setTimeout(()=>{
+    const date=document.getElementById('j-date')?.value;
+    if(!date)return;
+    const editId=document.getElementById('j-edit-id')?.value;
+    const g=id=>{const el=document.getElementById(id);if(!el)return '';return el.getAttribute('contenteditable')!==null?el.innerHTML.trim():el.value.trim();};
+    syncApparatusNotesFromDOM();
+    const apparatusNotes={};
+    [...jApparatus].forEach(a=>{if(jApparatusNoteData[a])apparatusNotes[a]=jApparatusNoteData[a];});
+    const existing=editId?DB.journal.find(j=>j.id===editId):null;
+    const autoId=editId||(Date.now().toString());
+    if(!editId){const el=document.getElementById('j-edit-id');if(el)el.value=autoId;}
+    const entry={
+      ...(existing||{}),
+      id:autoId,date,apparatus:[...jApparatus],
+      theme:g('j-theme'),overallFocus:g('j-overall-focus'),warmupFocus:g('j-warmup-focus'),
+      overallReview:g('j-overall-review'),overallAction:g('j-overall-action'),warmupReview:g('j-warmup-review'),
+      notes:g('j-notes'),constraints:g('j-constraints'),
+      duration:+document.getElementById('j-duration')?.value||0,
+      condition:journalCondition,mental:journalMental,achievement:journalAchievement,
+      apparatusNotes,
+    };
+    if(editId){DB.journal=DB.journal.map(j=>j.id===editId?entry:j);}
+    else{DB.journal.push(entry);}
+    saveDB();
+    const lbl=document.getElementById('j-autosave-label');
+    if(lbl){lbl.textContent='✓ 保存済み';setTimeout(()=>{lbl.textContent='';},2000);}
+  },1500);
 }
 
 // 種目別ノートの一時保存用
@@ -2571,9 +2624,10 @@ function renderApparatusNotesReview(){
 function renderPreSummary(){
   const el=document.getElementById('j-pre-summary');
   if(!el)return;
-  const theme=document.getElementById('j-theme')?.value||'';
-  const focus=document.getElementById('j-overall-focus')?.value||'';
-  const warmupFocus=document.getElementById('j-warmup-focus')?.value||'';
+  const _rf=id=>{const e=document.getElementById(id);return e?e.innerText||'':'';}
+  const theme=_rf('j-theme');
+  const focus=_rf('j-overall-focus');
+  const warmupFocus=_rf('j-warmup-focus');
   const appFocuses=APPARATUS_M.filter(a=>jApparatus.has(a)&&jApparatusNoteData[a]?.focus);
   if(!theme&&!focus&&!warmupFocus&&!appFocuses.length){el.style.display='none';return;}
   const parts=[];
@@ -2596,7 +2650,7 @@ function savePracticePlan(){
   if(!date){alert('日付を入力してください');return;}
   syncApparatusNotesFromDOM();
   const editId=document.getElementById('j-edit-id').value;
-  const g=id=>document.getElementById(id)?.value.trim()||'';
+  const g=id=>{const el=document.getElementById(id);if(!el)return '';return el.getAttribute('contenteditable')!==null?el.innerHTML.trim():el.value.trim();};
   const existing=editId?DB.journal.find(j=>j.id===editId):null;
   const apparatusNotes={};
   [...jApparatus].forEach(a=>{if(jApparatusNoteData[a])apparatusNotes[a]=jApparatusNoteData[a];});
@@ -2670,7 +2724,7 @@ function saveJournalEntry(){
   const apparatusNotes={};
   [...jApparatus].forEach(a=>{if(jApparatusNoteData[a])apparatusNotes[a]=jApparatusNoteData[a];});
   const existing=editId?DB.journal.find(j=>j.id===editId):null;
-  const g=id=>document.getElementById(id)?.value.trim()||'';
+  const g=id=>{const el=document.getElementById(id);if(!el)return '';return el.getAttribute('contenteditable')!==null?el.innerHTML.trim():el.value.trim();};
   const entry={
     ...(existing||{}),
     id:editId||Date.now().toString(), date,
