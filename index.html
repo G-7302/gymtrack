@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260708_073843';
+const _APP_VER='20260710_064241';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -101,7 +101,7 @@ input:focus,select:focus,textarea:focus{outline:none;border-color:var(--accent);
 /* カレンダー・スピナーアイコンをテーマ色に合わせる */
 input[type="date"]::-webkit-calendar-picker-indicator{filter:invert(1)!important;opacity:0.7;cursor:pointer}
 input[type="date"]::-webkit-calendar-picker-indicator:hover{opacity:1}
-textarea{resize:vertical;min-height:80px}
+textarea{min-height:44px;overflow:hidden;}
 select option{background:var(--surface2)}
 .row{display:flex;gap:12px}
 .row .form-group{flex:1}
@@ -2517,8 +2517,14 @@ function openJournalModal(editId){
   jMode=openOnReview?'review':'plan';
   _applyJMode();
   document.getElementById('modal-journal').classList.add('open');
-  setTimeout(setupTouchResize,100);
+  setTimeout(()=>{autoGrowAll(document.getElementById('modal-journal'));},100);
 }
+
+// ── textarea オートグロー（モバイル対応） ──
+function autoGrow(el){el.style.height='auto';el.style.height=el.scrollHeight+'px';}
+document.addEventListener('input',e=>{if(e.target.tagName==='TEXTAREA')autoGrow(e.target);});
+// モーダルを開いたとき既存テキストに合わせてリサイズ
+function autoGrowAll(root){(root||document).querySelectorAll('textarea').forEach(autoGrow);}
 
 // ── 書式コンテキストメニュー ──
 (function(){
@@ -2636,6 +2642,7 @@ function renderApparatusNotesPlan(){
     container.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">↑ 上の種目チップを選択するとここに入力欄が表示されます</div>';
     return;
   }
+  setTimeout(()=>autoGrowAll(container),50);
   const ordered=APPARATUS_M.filter(a=>jApparatus.has(a));
   container.innerHTML=ordered.map(a=>{
     const d=jApparatusNoteData[a]||{focus:'',review:'',action:''};
@@ -2657,6 +2664,7 @@ function renderApparatusNotesReview(){
     container.innerHTML='<div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">練習計画タブで種目を選択してください</div>';
     return;
   }
+  setTimeout(()=>autoGrowAll(container),50);
   const ordered=APPARATUS_M.filter(a=>jApparatus.has(a));
   container.innerHTML=ordered.map(a=>{
     const d=jApparatusNoteData[a]||{focus:'',review:'',action:''};
