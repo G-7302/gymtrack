@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260712_083849';
+const _APP_VER='20260712_085046';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -4522,42 +4522,42 @@ async function saveRoutineAsImage(btn){
   if(!r){alert('演技構成が選択されていません');return;}
   if(btn){btn.disabled=true;btn.textContent='生成中...';}
 
-  // インラインカラー定数（CSSvar非対応のhtml2canvas対策）
   const BG='#ffffff',BG2='#f8fafc',BORDER='#e2e8f0';
   const T1='#0f172a',T2='#475569',T3='#94a3b8';
   const AC={FX:'#f97316',PH:'#8b5cf6',SR:'#0ea5e9',VT:'#10b981',PB:'#f59e0b',HB:'#ef4444'};
   const AN={FX:'ゆか',PH:'あん馬',SR:'つり輪',VT:'跳馬',PB:'平行棒',HB:'鉄棒'};
-  // グリッド順: 左列=FX→PH→SR、右列=VT→PB→HB
   const gridOrder=['FX','VT','PH','PB','SR','HB'];
   const today=localDate().replace(/-/g,'.');
 
-  // A4横比率: 1500×1060px（297:210≈1.414）、scale:2で高解像度出力
+  // A4横比率 1500×1060px、scale:2で高解像度出力
   const W=1500,H=1060,PAD=22;
-  const PAGE_HDR=50;  // ページタイトル部分の高さ
-  const HDR_H=32;     // 種目名バー
-  const SUM_H=44;     // 難度サマリーバー
-  const TH_H=26;      // テーブルヘッダー行
-  const CARD_H=Math.floor((H-PAD*2-PAGE_HDR-8*2)/3); // ≈317px
-  const ROW_H=Math.floor((CARD_H-HDR_H-SUM_H-TH_H)/8); // ≈26px
+  const PAGE_HDR=50;
+  const HDR_H=32;   // 種目名バー
+  const SUM_H=48;   // スコアサマリーバー
+  const TH_H=24;    // テーブルヘッダー
+  const CARD_H=Math.floor((H-PAD*2-PAGE_HDR-8*2)/3); // ≈316px
+  const ROW_H=28;   // 技1行の高さ（実際の技のみ、空行なし）
 
   function buildApp(app){
     const c=AC[app];
     const appData=r[app]||{elements:[]};
 
-    // ── 跳馬: D値と技名のみ ──
+    // ── 跳馬: コンパクトカード2枚 ──
     if(app==='VT'){
       const v1=appData.vault1,v2=appData.vault2;
       const d1=v1?(+v1.vd).toFixed(1):'—';
       const d2=v2?(+v2.vd).toFixed(1):'—';
       const vBox=(label,d,name)=>`
-        <div style="border:1.5px solid ${c}33;border-radius:6px;padding:14px 18px;background:${c}07;flex:1;display:flex;flex-direction:column;justify-content:center;">
-          <div style="font-size:11px;color:${T3};font-weight:600;margin-bottom:6px;letter-spacing:.5px;">${label}</div>
-          <div style="font-size:32px;font-weight:900;color:${T1};line-height:1;">${d}</div>
-          <div style="font-size:13px;color:${T2};margin-top:8px;">${name||'(未設定)'}</div>
+        <div style="border:1px solid ${c}33;border-radius:6px;padding:12px 16px;background:${c}07;flex:1;display:flex;flex-direction:column;justify-content:center;">
+          <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px;">
+            <span style="font-size:10px;color:${T3};font-weight:600;letter-spacing:.5px;">${label}</span>
+            <span style="font-size:18px;font-weight:900;color:${c};">${d}</span>
+          </div>
+          <div style="font-size:13px;color:${T2};">${name||'(未設定)'}</div>
         </div>`;
       return `<div style="border:1.5px solid ${c}44;border-radius:7px;overflow:hidden;height:${CARD_H}px;box-sizing:border-box;">
         <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:8px 12px;font-size:15px;font-weight:700;color:${c};height:${HDR_H}px;box-sizing:border-box;">${AN[app]}</div>
-        <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;height:${CARD_H-HDR_H}px;box-sizing:border-box;">
+        <div style="padding:16px 18px;display:flex;flex-direction:column;gap:12px;height:${CARD_H-HDR_H}px;box-sizing:border-box;">
           ${vBox('1 本 目',d1,v1?v1.ja:null)}
           ${vBox('2 本 目',d2,v2?v2.ja:null)}
         </div>
@@ -4570,58 +4570,59 @@ async function saveRoutineAsImage(btn){
     const egL=v=>v===0?'—':v.toFixed(1);
     const egC=v=>v===0?T3:v===0.3?'#d97706':'#059669';
 
-    const summaryLabels=['難度点','要求','加点','Ⅰ','Ⅱ','Ⅲ','Ⅳ','D得点'];
-    const summaryVals=[
-      calc.dvSum.toFixed(1),calc.egBonus.toFixed(1),calc.cv.toFixed(1),
-      egL(calc.egScores.I),egL(calc.egScores.II),egL(calc.egScores.III),egL(calc.egScores.IV),
-      calc.dScore.toFixed(1)
+    // サマリーバー: 左に細かい内訳、右端にD得点大きく
+    const leftItems=[
+      {l:'難度点',v:calc.dvSum.toFixed(1),col:T1},
+      {l:'要求',  v:calc.egBonus.toFixed(1),col:T1},
+      {l:'加点',  v:calc.cv.toFixed(1),col:T1},
+      {l:'Ⅰ', v:egL(calc.egScores.I),  col:egC(calc.egScores.I)},
+      {l:'Ⅱ', v:egL(calc.egScores.II), col:egC(calc.egScores.II)},
+      {l:'Ⅲ', v:egL(calc.egScores.III),col:egC(calc.egScores.III)},
+      {l:'Ⅳ', v:egL(calc.egScores.IV), col:egC(calc.egScores.IV)},
     ];
-    const summaryColors=[T1,T1,T1,egC(calc.egScores.I),egC(calc.egScores.II),egC(calc.egScores.III),egC(calc.egScores.IV),c];
-
-    const summaryHtml=summaryLabels.map((l,i)=>`
-      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;border-right:${i<7?'1px solid '+BORDER:'none'};height:${SUM_H}px;box-sizing:border-box;">
-        <div style="font-size:10px;color:${T3};margin-bottom:2px;">${l}</div>
-        <div style="font-size:${i===7?15:12}px;font-weight:${i===7?800:700};color:${summaryColors[i]};">${summaryVals[i]}</div>
+    const leftHtml=leftItems.map(({l,v,col})=>`
+      <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;height:${SUM_H}px;box-sizing:border-box;border-right:1px solid ${BORDER};">
+        <div style="font-size:8.5px;color:${T3};margin-bottom:2px;">${l}</div>
+        <div style="font-size:12px;font-weight:700;color:${col};">${v}</div>
       </div>`).join('');
 
-    // 常に8行表示（技が少ない場合は空行で埋める）
-    const rows8=Array.from({length:8},(_,i)=>{
-      const e=elems[i];
-      const bg=i%2===0?BG:BG2;
-      if(!e){
-        return `<tr style="height:${ROW_H}px;background:${bg};">
-          <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:${T3};text-align:center;font-weight:600;">${i+1}</td>
-          <td colspan="5" style="border-bottom:1px solid ${BORDER}44;"></td>
-        </tr>`;
-      }
-      return `<tr style="height:${ROW_H}px;background:${bg};">
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 5px;font-size:12px;color:${T3};text-align:center;font-weight:600;">${i+1}</td>
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 10px;font-size:13px;color:${T1};">${e.nameJa||''}</td>
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 5px;font-size:14px;font-weight:800;text-align:center;color:${T1};">${e.dvL||DV_LETTER(e.dv)}</td>
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${(+e.dv).toFixed(1)}</td>
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${EG_ROMAN[e.eg]||e.eg}</td>
-        <td style="border-bottom:1px solid ${BORDER}55;padding:0 5px;font-size:12px;color:#059669;text-align:center;font-weight:700;">${+e.cv>0?'+'+e.cv:''}</td>
-      </tr>`;
-    }).join('');
+    const summaryHtml=`
+      <div style="display:flex;flex:1;background:${BG2};">${leftHtml}</div>
+      <div style="width:76px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${c}14;border-left:2px solid ${c}40;">
+        <div style="font-size:9px;color:${c};font-weight:700;letter-spacing:.3px;margin-bottom:3px;">D 得 点</div>
+        <div style="font-size:22px;font-weight:900;color:${c};line-height:1;">${calc.dScore.toFixed(1)}</div>
+      </div>`;
+
+    // 実際の技だけ表示（空行なし・上限8技）
+    const visElems=elems.slice(0,8);
+    const rowsHtml=visElems.map((e,i)=>`
+      <tr style="height:${ROW_H}px;background:${i%2===0?BG:BG2};">
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 6px;font-size:11px;color:${T3};text-align:center;font-weight:600;">${i+1}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 10px;font-size:13px;color:${T1};">${e.nameJa||''}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:15px;font-weight:800;text-align:center;color:${T1};">${e.dvL||DV_LETTER(e.dv)}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${(+e.dv).toFixed(1)}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${EG_ROMAN[e.eg]||e.eg}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:#059669;text-align:center;font-weight:700;">${+e.cv>0?'+'+e.cv:''}</td>
+      </tr>`).join('');
 
     return `<div style="border:1.5px solid ${c}44;border-radius:7px;overflow:hidden;height:${CARD_H}px;box-sizing:border-box;">
       <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:8px 12px;font-size:15px;font-weight:700;color:${c};height:${HDR_H}px;box-sizing:border-box;">${AN[app]}</div>
-      <div style="display:flex;background:${BG2};border-bottom:1.5px solid ${BORDER};height:${SUM_H}px;">${summaryHtml}</div>
+      <div style="display:flex;border-bottom:1.5px solid ${BORDER};height:${SUM_H}px;">${summaryHtml}</div>
       <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
         <thead><tr style="background:${BG2};height:${TH_H}px;">
-          <th style="padding:0 5px;font-size:11px;color:${T3};text-align:center;width:28px;border-bottom:2px solid ${BORDER};">#</th>
-          <th style="padding:0 10px;font-size:11px;color:${T3};text-align:left;border-bottom:2px solid ${BORDER};">要素名</th>
-          <th style="padding:0 5px;font-size:11px;color:${T3};text-align:center;width:36px;border-bottom:2px solid ${BORDER};">難度</th>
-          <th style="padding:0 5px;font-size:11px;color:${T3};text-align:center;width:40px;border-bottom:2px solid ${BORDER};">DV</th>
-          <th style="padding:0 5px;font-size:11px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">EG</th>
-          <th style="padding:0 5px;font-size:11px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">CV</th>
+          <th style="padding:0 6px;font-size:10px;color:${T3};text-align:center;width:28px;border-bottom:2px solid ${BORDER};">#</th>
+          <th style="padding:0 10px;font-size:10px;color:${T3};text-align:left;border-bottom:2px solid ${BORDER};">要素名</th>
+          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:36px;border-bottom:2px solid ${BORDER};">難度</th>
+          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:42px;border-bottom:2px solid ${BORDER};">DV</th>
+          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">EG</th>
+          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">CV</th>
         </tr></thead>
-        <tbody>${rows8}</tbody>
+        <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
   }
 
-  // オフスクリーンコンテナ
+  // オフスクリーンコンテナ（A4横比率・固定サイズ）
   const wrap=document.createElement('div');
   wrap.style.cssText=[
     'position:fixed','left:-9999px','top:0',
