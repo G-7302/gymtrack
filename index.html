@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260712_072932';
+const _APP_VER='20260712_080114';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -4527,13 +4527,20 @@ async function saveRoutineAsImage(btn){
   const T1='#0f172a',T2='#475569',T3='#94a3b8';
   const AC={FX:'#f97316',PH:'#8b5cf6',SR:'#0ea5e9',VT:'#10b981',PB:'#f59e0b',HB:'#ef4444'};
   const AN={FX:'ゆか',PH:'あん馬',SR:'つり輪',VT:'跳馬',PB:'平行棒',HB:'鉄棒'};
-  const apps=['FX','PH','SR','VT','PB','HB'];
+  // グリッド順: 左列=FX→PH→SR、右列=VT→PB→HB（2列グリッドで左右交互に配置）
+  const gridOrder=['FX','VT','PH','PB','SR','HB'];
   const today=localDate().replace(/-/g,'.');
+
+  // A4横比率: 297:210 ≈ 1.414:1 → 1414px × 1000px
+  const W=1414,H=1000,PAD=22;
+  // カード高さ: (H - ヘッダー55 - gap*2 - padding*2) / 3行
+  const CARD_H=Math.floor((H-55-8*2-PAD*2)/3); // ≈ 286px
 
   // 各種目ブロックHTML
   function buildApp(app){
     const c=AC[app];
     const appData=r[app]||{elements:[]};
+    const CH=CARD_H;
 
     if(app==='VT'){
       const v1=appData.vault1,v2=appData.vault2;
@@ -4543,14 +4550,14 @@ async function saveRoutineAsImage(btn){
       const eScore=+(appData.eTarget||9.0);
       const nd=+(appData.nd||0),sb=+(appData.sb||0);
       const score=Math.max(0,dScore+eScore-nd+sb);
-      return `<div style="border:1.5px solid ${c}44;border-radius:8px;overflow:hidden;break-inside:avoid;">
-        <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:6px 10px;font-size:13px;font-weight:700;color:${c};">${AN[app]}</div>
-        <div style="padding:8px 12px;">
-          <div style="display:flex;gap:16px;margin-bottom:5px;font-size:11px;color:${T2};">
-            <span>1本目 <strong style="color:${T1};">${d1}</strong> ${v1?v1.ja:''}</span>
-            <span>2本目 <strong style="color:${T1};">${d2}</strong> ${v2?v2.ja:''}</span>
+      return `<div style="border:1.5px solid ${c}44;border-radius:7px;overflow:hidden;height:${CH}px;box-sizing:border-box;">
+        <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:5px 10px;font-size:12px;font-weight:700;color:${c};">${AN[app]}</div>
+        <div style="padding:10px 12px;">
+          <div style="margin-bottom:6px;font-size:11px;color:${T2};">
+            <span style="display:block;margin-bottom:3px;">1本目 <strong style="color:${T1};">${d1}</strong>${v1?' '+v1.ja:''}</span>
+            <span style="display:block;">2本目 <strong style="color:${T1};">${d2}</strong>${v2?' '+v2.ja:''}</span>
           </div>
-          <div style="font-size:11px;color:${T3};">E目標: ${eScore.toFixed(1)} ／ D: ${dScore.toFixed(1)} ／ D+E: ${score.toFixed(3)}</div>
+          <div style="font-size:11px;color:${T3};">E目標: ${eScore.toFixed(1)} ／ D: ${dScore.toFixed(1)} ／ 合計: ${score.toFixed(3)}</div>
         </div>
       </div>`;
     }
@@ -4569,110 +4576,67 @@ async function saveRoutineAsImage(btn){
     const summaryColors=[T1,T1,T1,egC(calc.egScores.I),egC(calc.egScores.II),egC(calc.egScores.III),egC(calc.egScores.IV),c];
 
     const summaryHtml=summaryLabels.map((l,i)=>`
-      <div style="display:flex;flex-direction:column;align-items:center;flex:1;padding:3px 2px;border-right:${i<7?'1px solid '+BORDER:'none'};">
-        <div style="font-size:8px;color:${T3};margin-bottom:2px;">${l}</div>
-        <div style="font-size:${i===7?12:10}px;font-weight:${i===7?700:600};color:${summaryColors[i]};">${summaryVals[i]}</div>
+      <div style="display:flex;flex-direction:column;align-items:center;flex:1;padding:3px 1px;border-right:${i<7?'1px solid '+BORDER:'none'};">
+        <div style="font-size:7.5px;color:${T3};margin-bottom:1px;">${l}</div>
+        <div style="font-size:${i===7?11:9.5}px;font-weight:${i===7?700:600};color:${summaryColors[i]};">${summaryVals[i]}</div>
       </div>`).join('');
 
-    const rowsHtml=elems.slice(0,10).map((e,i)=>`
-      <tr style="${i>=8?'background:#fef2f2;':''}border-bottom:1px solid ${BORDER}88;">
-        <td style="padding:2px 4px;font-size:9px;color:${T3};text-align:center;width:18px;">${i+1}</td>
-        <td style="padding:2px 6px;font-size:10px;color:${T1};max-width:140px;">${e.nameJa||''}</td>
-        <td style="padding:2px 4px;font-size:10px;font-weight:700;text-align:center;width:22px;">${e.dvL||DV_LETTER(e.dv)}</td>
-        <td style="padding:2px 4px;font-size:9px;color:${T2};text-align:center;width:26px;">${(+e.dv).toFixed(1)}</td>
-        <td style="padding:2px 4px;font-size:9px;color:${T2};text-align:center;width:22px;">${EG_ROMAN[e.eg]||e.eg}</td>
-        <td style="padding:2px 4px;font-size:9px;color:#059669;text-align:center;width:22px;">${+e.cv>0?'+'+e.cv:''}</td>
+    // カード内の技リスト最大行数（カード高さから逆算）
+    const HEADER_H=28,SUMMARY_H=38,TH_H=20,ROW_H=19;
+    const maxRows=Math.floor((CH-HEADER_H-SUMMARY_H-TH_H)/ROW_H);
+    const visElems=elems.slice(0,Math.min(10,maxRows));
+
+    const rowsHtml=visElems.map((e,i)=>`
+      <tr style="${i>=8?'background:#fef2f2;':''}">
+        <td style="padding:1.5px 3px;font-size:8.5px;color:${T3};text-align:center;">${i+1}</td>
+        <td style="padding:1.5px 5px;font-size:9.5px;color:${T1};">${e.nameJa||''}</td>
+        <td style="padding:1.5px 3px;font-size:9.5px;font-weight:700;text-align:center;">${e.dvL||DV_LETTER(e.dv)}</td>
+        <td style="padding:1.5px 3px;font-size:8.5px;color:${T2};text-align:center;">${(+e.dv).toFixed(1)}</td>
+        <td style="padding:1.5px 3px;font-size:8.5px;color:${T2};text-align:center;">${EG_ROMAN[e.eg]||e.eg}</td>
+        <td style="padding:1.5px 3px;font-size:8.5px;color:#059669;text-align:center;">${+e.cv>0?'+'+e.cv:''}</td>
       </tr>`).join('');
 
-    return `<div style="border:1.5px solid ${c}44;border-radius:8px;overflow:hidden;break-inside:avoid;">
-      <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:5px 10px;font-size:13px;font-weight:700;color:${c};">${AN[app]}</div>
+    return `<div style="border:1.5px solid ${c}44;border-radius:7px;overflow:hidden;height:${CH}px;box-sizing:border-box;">
+      <div style="background:${c}18;border-bottom:2px solid ${c}55;padding:4px 10px;font-size:12px;font-weight:700;color:${c};">${AN[app]}</div>
       <div style="display:flex;background:${BG2};border-bottom:1px solid ${BORDER};">${summaryHtml}</div>
       <table style="width:100%;border-collapse:collapse;">
         <thead><tr style="background:${BG2};">
-          <th style="padding:2px 4px;font-size:8px;color:${T3};text-align:center;width:18px;">#</th>
-          <th style="padding:2px 6px;font-size:8px;color:${T3};text-align:left;">要素名</th>
-          <th style="padding:2px 4px;font-size:8px;color:${T3};text-align:center;width:22px;">難</th>
-          <th style="padding:2px 4px;font-size:8px;color:${T3};text-align:center;width:26px;">DV</th>
-          <th style="padding:2px 4px;font-size:8px;color:${T3};text-align:center;width:22px;">EG</th>
-          <th style="padding:2px 4px;font-size:8px;color:${T3};text-align:center;width:22px;">CV</th>
+          <th style="padding:2px 3px;font-size:7.5px;color:${T3};text-align:center;width:16px;border-bottom:1px solid ${BORDER};">#</th>
+          <th style="padding:2px 5px;font-size:7.5px;color:${T3};text-align:left;border-bottom:1px solid ${BORDER};">要素名</th>
+          <th style="padding:2px 3px;font-size:7.5px;color:${T3};text-align:center;width:20px;border-bottom:1px solid ${BORDER};">難</th>
+          <th style="padding:2px 3px;font-size:7.5px;color:${T3};text-align:center;width:24px;border-bottom:1px solid ${BORDER};">DV</th>
+          <th style="padding:2px 3px;font-size:7.5px;color:${T3};text-align:center;width:20px;border-bottom:1px solid ${BORDER};">EG</th>
+          <th style="padding:2px 3px;font-size:7.5px;color:${T3};text-align:center;width:20px;border-bottom:1px solid ${BORDER};">CV</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
   }
 
-  // 得点サマリー
-  const scores=apps.map(app=>{
-    let dScore=0,eScore=0,nd=0,sb=0;
-    if(app==='VT'){
-      const v1=r.VT?.vault1?.vd||0,v2=r.VT?.vault2?.vd||0;
-      dScore=Math.max(v1,v2);eScore=+(r.VT?.eTarget||9.0);nd=+(r.VT?.nd||0);sb=+(r.VT?.sb||0);
-    }else{
-      const calc=calcDScore(r[app]||{elements:[]},app);
-      dScore=calc.dScore;eScore=+(r[app]?.eTarget||8.5);nd=+(r[app]?.nd||0);sb=app!=='PH'?+(r[app]?.sb||0):0;
-    }
-    return {app,dScore,eScore,nd,sb,score:Math.max(0,dScore+eScore-nd+sb)};
-  });
-  const total=scores.reduce((s,x)=>s+x.score,0);
-
-  const summaryRows=scores.map(s=>{
-    const c=AC[s.app];
-    return `<tr style="border-bottom:1px solid ${BORDER};">
-      <td style="padding:5px 12px;font-size:12px;font-weight:700;color:${c};">${AN[s.app]}</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:center;color:#818cf8;font-weight:600;">${s.dScore.toFixed(1)}</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:center;color:${T2};">${s.eScore.toFixed(1)}</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:center;color:#34d399;">${s.sb>0?'+'+s.sb.toFixed(1):'—'}</td>
-      <td style="padding:5px 8px;font-size:12px;text-align:center;color:#f87171;">${s.nd>0?s.nd.toFixed(1):'—'}</td>
-      <td style="padding:5px 12px;font-size:13px;font-weight:800;text-align:center;color:${T1};">${s.score.toFixed(3)}</td>
-    </tr>`;
-  }).join('');
-
-  // オフスクリーンコンテナ作成
+  // オフスクリーンコンテナ（A4横比率 1414×1000px固定）
   const wrap=document.createElement('div');
   wrap.style.cssText=[
     'position:fixed','left:-9999px','top:0',
-    'width:1200px','background:#fff',
-    'padding:24px 28px',
+    `width:${W}px`,`height:${H}px`,
+    'background:#fff',
+    `padding:${PAD}px`,
+    'box-sizing:border-box',
+    'overflow:hidden',
     "font-family:'Hiragino Kaku Gothic Pro','ヒラギノ角ゴ Pro W3','Meiryo','Yu Gothic','sans-serif'"
   ].join(';');
 
   wrap.innerHTML=`
     <!-- ヘッダー -->
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:18px;border-bottom:2.5px solid ${T1};padding-bottom:8px;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:12px;border-bottom:2px solid ${T1};padding-bottom:6px;">
       <div>
-        <div style="font-size:22px;font-weight:800;color:${T1};letter-spacing:.5px;">演技構成表</div>
-        <div style="font-size:13px;color:${T2};margin-top:3px;">${r.name||''}</div>
+        <div style="font-size:18px;font-weight:800;color:${T1};letter-spacing:.5px;">演技構成表</div>
+        <div style="font-size:11px;color:${T2};margin-top:2px;">${r.name||''}</div>
       </div>
-      <div style="font-size:13px;color:${T3};">${today}</div>
+      <div style="font-size:11px;color:${T3};">${today}</div>
     </div>
-
-    <!-- 6種目グリッド（2列×3行） -->
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px;">
-      ${apps.map(a=>buildApp(a)).join('')}
-    </div>
-
-    <!-- 得点サマリーテーブル -->
-    <div style="border:1.5px solid ${BORDER};border-radius:8px;overflow:hidden;">
-      <div style="background:${T1};padding:8px 14px;font-size:12px;font-weight:700;color:#fff;letter-spacing:.3px;">得点サマリー</div>
-      <table style="width:100%;border-collapse:collapse;">
-        <thead>
-          <tr style="background:${BG2};">
-            <th style="padding:6px 12px;text-align:left;font-size:11px;color:${T3};font-weight:600;border-bottom:1px solid ${BORDER};">種目</th>
-            <th style="padding:6px 8px;text-align:center;font-size:11px;color:#818cf8;font-weight:700;border-bottom:1px solid ${BORDER};">D得点</th>
-            <th style="padding:6px 8px;text-align:center;font-size:11px;color:${T3};font-weight:600;border-bottom:1px solid ${BORDER};">E目標</th>
-            <th style="padding:6px 8px;text-align:center;font-size:11px;color:#34d399;font-weight:700;border-bottom:1px solid ${BORDER};">SB</th>
-            <th style="padding:6px 8px;text-align:center;font-size:11px;color:#f87171;font-weight:700;border-bottom:1px solid ${BORDER};">ND</th>
-            <th style="padding:6px 12px;text-align:center;font-size:11px;color:${T1};font-weight:700;border-bottom:1px solid ${BORDER};">得点</th>
-          </tr>
-        </thead>
-        <tbody>
-          ${summaryRows}
-          <tr style="background:#f1f5f9;border-top:2px solid ${T1};">
-            <td colspan="5" style="padding:6px 12px;font-size:13px;font-weight:700;color:${T1};text-align:right;">合計</td>
-            <td style="padding:6px 12px;font-size:17px;font-weight:800;text-align:center;color:#6366f1;">${total.toFixed(3)}</td>
-          </tr>
-        </tbody>
-      </table>
+    <!-- 6種目グリッド（左列:ゆか→あん馬→つり輪 / 右列:跳馬→平行棒→鉄棒） -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+      ${gridOrder.map(a=>buildApp(a)).join('')}
     </div>`;
 
   document.body.appendChild(wrap);
@@ -4682,8 +4646,9 @@ async function saveRoutineAsImage(btn){
       scale:2,
       useCORS:true,
       backgroundColor:'#ffffff',
-      width:1200,
-      windowWidth:1256  // padding込み
+      width:W,
+      height:H,
+      windowWidth:W+PAD*2
     });
     const link=document.createElement('a');
     link.download=`演技構成表_${(r.name||'routine').replace(/\s/g,'_')}_${today.replace(/\./g,'')}.png`;
