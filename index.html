@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260710_064241';
+const _APP_VER='20260712_071545';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -883,7 +883,7 @@ canvas{max-height:240px}
 <!-- ===== MODALS ===== -->
 
 <!-- Journal Modal -->
-<div class="modal-overlay" id="modal-journal">
+<div class="modal-overlay" id="modal-journal" onclick="if(event.target===this)closeModal('modal-journal')">
   <div class="modal" style="max-width:600px;max-height:90vh;overflow-y:auto;">
     <div class="modal-title"><span id="j-modal-day-label">📓 練習記録</span><button class="modal-close" onclick="closeModal('modal-journal')">✕</button></div>
 
