@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260712_085046';
+const _APP_VER='20260713_073651';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -702,7 +702,7 @@ canvas{max-height:240px}
       <div class="db-cal-legend"><div class="db-cal-leg-dot" style="background:#f59e0b;"></div>達成度中</div>
       <div class="db-cal-legend"><div class="db-cal-leg-dot" style="background:#ef4444;"></div>達成度低</div>
       <div class="db-cal-legend"><div class="db-cal-leg-dot" style="border:1px solid var(--border);"></div>未記録</div>
-      <div class="db-cal-legend"><span style="font-size:8px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 4px;font-weight:700;">📋</span>週次計画</div>
+      <div class="db-cal-legend"><span style="font-size:8px;background:var(--accent);color:#fff;border-radius:3px;padding:1px 4px;font-weight:700;">📓</span>週間内省</div>
     </div>
     <div class="db-cal-resize-handle" onmousedown="calResizeStart(event)" ontouchstart="calResizeStart(event)" title="ドラッグ（長押しスライド）でカレンダーの高さを調整"></div>
   </div>
@@ -720,7 +720,7 @@ canvas{max-height:240px}
   <!-- タブバー -->
   <div class="journal-tabs" style="display:flex;gap:0;margin-bottom:20px;background:var(--surface);border-radius:var(--radius);padding:4px;border:1px solid var(--border);">
     <button class="journal-tab-btn active" id="jtab-log" onclick="setJournalTab('log')">📓 ログ一覧</button>
-    <button class="journal-tab-btn" id="jtab-week" onclick="setJournalTab('week')">📋 週次計画</button>
+    <button class="journal-tab-btn" id="jtab-week" onclick="setJournalTab('week')">📓 週間内省</button>
     <button class="journal-tab-btn" id="jtab-cal" onclick="setJournalTab('cal')">📅 カレンダー</button>
   </div>
 
@@ -1020,19 +1020,37 @@ canvas{max-height:240px}
 <!-- Weekly Plan Modal -->
 <div class="modal-overlay" id="modal-weekplan">
   <div class="modal" style="max-width:580px;max-height:90vh;overflow-y:auto;">
-    <div class="modal-title"><span>📋 週次計画</span><button class="modal-close" onclick="closeModal('modal-weekplan')">✕</button></div>
+    <div class="modal-title"><span>📓 週間内省</span><button class="modal-close" onclick="closeModal('modal-weekplan')">✕</button></div>
     <input type="hidden" id="wp-week-start">
 
-    <!-- 前週サマリー（月曜に自動表示） -->
+    <!-- 練習サマリー自動表示 -->
     <div id="wp-prev-summary" style="display:none;margin-bottom:14px;padding:10px 14px;background:var(--surface2);border-radius:var(--radius-sm);border-left:3px solid var(--accent);">
-      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;">📊 前週の振り返り</div>
+      <div style="font-size:11px;font-weight:700;color:var(--accent2);margin-bottom:6px;">📊 今週の練習サマリー</div>
       <div id="wp-prev-summary-body" style="font-size:12px;color:var(--text2);line-height:1.7;"></div>
     </div>
 
-    <!-- フェーズ自動判定 -->
+    <!-- 今週の振り返り -->
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin-bottom:12px;padding-bottom:6px;border-bottom:1px solid var(--border);">今週の振り返り</div>
+
+    <div class="form-group">
+      <label>① 今週うまくできたこと</label>
+      <textarea id="wp-well" placeholder="例：ゆかの前方宙返りの踏み切りタイミングが安定してきた" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+    </div>
+    <div class="form-group">
+      <label>② 今週改善できたこと</label>
+      <textarea id="wp-improve" placeholder="例：あん馬のロシアン転向でバランスを崩すことが多かった" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+    </div>
+    <div class="form-group">
+      <label>③ 来週最も集中すべき課題（②の中から）</label>
+      <textarea id="wp-focus" placeholder="例：あん馬ロシアン転向の体軸を安定させる" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+    </div>
+
+    <!-- 来週の計画 -->
+    <div style="font-size:11px;font-weight:700;color:var(--text3);text-transform:uppercase;letter-spacing:.05em;margin:20px 0 12px;padding-bottom:6px;border-bottom:1px solid var(--border);">来週の計画</div>
+
     <div class="row" style="align-items:flex-end;gap:8px;">
       <div class="form-group" style="flex:1;">
-        <label>今週の位置付け</label>
+        <label>来週の位置付け</label>
         <select id="wp-phase">
           <option value="training">鍛錬期（基礎・量を積む）</option>
           <option value="polishing">仕上げ期（精度・質を上げる）</option>
@@ -1041,15 +1059,16 @@ canvas{max-height:240px}
         </select>
       </div>
       <div style="padding-bottom:1px;">
-        <button class="btn btn-ghost btn-sm" onclick="wpFillPhase()" title="直近大会フェーズから優先課題・各日程提案を自動入力">⚡ フェーズから提案</button>
+        <button class="btn btn-ghost btn-sm" onclick="wpFillPhase()" title="直近大会フェーズから自動提案">⚡ 自動提案</button>
       </div>
     </div>
 
-    <div class="form-group"><label>今週の最優先課題 ①</label><input type="text" id="wp-p1" placeholder="例：後転とびの踏み切りを安定させる"></div>
-    <div class="form-group"><label>今週の最優先課題 ②</label><input type="text" id="wp-p2" placeholder="例：鉄棒の手放し技の離れを早くする"></div>
-    <div class="form-group"><label>今週の制約（怪我・疲労・施設など）</label><input type="text" id="wp-constraints" placeholder="例：左手の甲が痛いため手をつく技は制限"></div>
+    <div class="form-group">
+      <label>来週の制約（怪我・疲労・施設など）</label>
+      <textarea id="wp-constraints" placeholder="例：左手の甲が痛いため手をつく技は制限" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+    </div>
 
-    <div style="display:flex;gap:10px;justify-content:flex-end;">
+    <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
       <button class="btn btn-ghost" onclick="closeModal('modal-weekplan')">キャンセル</button>
       <button class="btn btn-primary" onclick="saveWeekPlan()">保存</button>
     </div>
@@ -1935,8 +1954,8 @@ function renderDashboard(){
   const btnBase='display:flex;align-items:center;gap:12px;width:100%;border:none;color:#fff;border-radius:var(--radius);padding:15px 18px;font-size:14px;font-weight:700;cursor:pointer;margin-bottom:20px;text-align:left;transition:all .18s;box-shadow:0 3px 16px rgba(99,102,241,.3);';
   if(isRest){
     document.getElementById('db-quick-menu-label').textContent=`今日は ${menuIcon} 休養日`;
-    document.getElementById('db-quick-icon').textContent='📋';
-    document.getElementById('db-quick-label').textContent='週次計画を記録する →';
+    document.getElementById('db-quick-icon').textContent='📓';
+    document.getElementById('db-quick-label').textContent='週間内省を記録する →';
     btn.onclick=()=>openWeekPlanModal(todayStr);
     btn.style.cssText=btnBase+'background:linear-gradient(135deg,#6264ef,#5457d4);';
   } else {
@@ -2118,7 +2137,7 @@ function buildCalendarHTML(y, m, {onDayClick='calDayClick', onMonClick='calMonCl
 
       html+=`<div class="${cls}" onclick="${clickFn}" style="${cellExtraStyle}">
         ${weekBadge}
-        ${hasWP?`<div class="db-cal-wp" onclick="event.stopPropagation();openWeekPlanModal('${ds}')" title="週次計画">📋</div>`:''}
+        ${hasWP?`<div class="db-cal-wp" onclick="event.stopPropagation();openWeekPlanModal('${ds}')" title="週間内省">📓</div>`:''}
         <div class="db-cal-num">${dayNum}</div>
         <div class="db-cal-menu" onclick="event.stopPropagation();showMenuPicker('${ds}',this)" title="メニュー変更">${menuIcon}${menuType||''}</div>
         ${stars?`<div class="db-cal-stars">${stars}</div>`:''}
@@ -2903,9 +2922,18 @@ function openWeekPlanModal(weekStart, prefillNote){
     autoPhase=calcPhase(days).key||'training';
   }
   document.getElementById('wp-phase').value=autoPhase;
-  document.getElementById('wp-p1').value=wp.priority1||'';
-  document.getElementById('wp-p2').value=wp.priority2||'';
-  document.getElementById('wp-constraints').value=wp.constraints||(prefillNote&&!wp.priority1?prefillNote:'')||'';
+
+  // 振り返りフィールド
+  const wellEl=document.getElementById('wp-well');
+  const improveEl=document.getElementById('wp-improve');
+  const focusEl=document.getElementById('wp-focus');
+  const constEl=document.getElementById('wp-constraints');
+  wellEl.value=wp.well||'';
+  improveEl.value=wp.improve||'';
+  focusEl.value=wp.focus||'';
+  constEl.value=wp.constraints||(prefillNote?prefillNote:'')||'';
+  // テキストエリア高さリセット
+  [wellEl,improveEl,focusEl,constEl].forEach(el=>{el.style.height='';autoGrow(el);});
 
   // 前週サマリー生成
   const prevWS=getPrevWeekStart(ws);
@@ -2960,8 +2988,9 @@ function saveWeekPlan(){
   const plan={
     id:ws, weekStart:ws,
     phase:document.getElementById('wp-phase').value,
-    priority1:document.getElementById('wp-p1').value.trim(),
-    priority2:document.getElementById('wp-p2').value.trim(),
+    well:document.getElementById('wp-well').value.trim(),
+    improve:document.getElementById('wp-improve').value.trim(),
+    focus:document.getElementById('wp-focus').value.trim(),
     constraints:document.getElementById('wp-constraints').value.trim()
   };
   if(!DB.weekPlans)DB.weekPlans=[];
@@ -2975,9 +3004,9 @@ function renderWeekPlanView(){
   const todayStr=localDate();
   const thisWS=getWeekStart(todayStr);
   let html=`<div style="display:flex;justify-content:flex-end;margin-bottom:16px;">
-    <button class="btn btn-primary" onclick="openWeekPlanModal()">＋ 今週の計画を入れる</button>
+    <button class="btn btn-primary" onclick="openWeekPlanModal()">＋ 週間内省を記録する</button>
   </div>`;
-  if(!plans.length){html+='<div class="empty"><div class="icon">📋</div><p>週次計画がまだありません</p></div>';el.innerHTML=html;return;}
+  if(!plans.length){html+='<div class="empty"><div class="icon">📓</div><p>週間内省がまだありません</p></div>';el.innerHTML=html;return;}
   html+=plans.map(wp=>{
     const isCurrent=wp.weekStart===thisWS;
     return `<div class="week-plan-card" style="${isCurrent?'border-color:var(--accent);':'' }">
@@ -2990,9 +3019,10 @@ function renderWeekPlanView(){
           <button class="btn btn-ghost btn-sm" onclick="deleteWeekPlan('${wp.weekStart}')">🗑️</button>
         </div>
       </div>
-      ${wp.priority1?`<div style="font-size:13px;font-weight:600;margin-bottom:4px;">① ${wp.priority1}</div>`:''}
-      ${wp.priority2?`<div style="font-size:13px;font-weight:600;margin-bottom:8px;">② ${wp.priority2}</div>`:''}
-      ${wp.constraints?`<div style="font-size:12px;color:var(--yellow);">⚠️ 制約: ${wp.constraints}</div>`:''}
+      ${wp.well?`<div style="font-size:13px;margin-bottom:6px;"><span style="font-weight:700;color:var(--green);">✓ うまくできたこと:</span> ${wp.well}</div>`:''}
+      ${wp.improve?`<div style="font-size:13px;margin-bottom:6px;"><span style="font-weight:700;color:var(--yellow);">△ 改善できたこと:</span> ${wp.improve}</div>`:''}
+      ${wp.focus?`<div style="font-size:13px;margin-bottom:6px;"><span style="font-weight:700;color:var(--accent);">▶ 来週の集中課題:</span> ${wp.focus}</div>`:''}
+      ${wp.constraints?`<div style="font-size:12px;color:var(--text3);margin-top:4px;">⚠️ 制約: ${wp.constraints}</div>`:''}
     </div>`;
   }).join('');
   el.innerHTML=html;
@@ -4059,12 +4089,12 @@ function planCard(c,todayStr){
 
   // ── 今週の課題 ──
   const weekHtml=!isPast?`<div style="${_SEC}">
-    <div style="${_PL}">今週の優先課題</div>
+    <div style="${_PL}">今週の内省</div>
     ${thisWP?`
-      ${thisWP.priority1?`<div style="font-size:13px;font-weight:700;margin-bottom:4px;">① ${thisWP.priority1}</div>`:''}
-      ${thisWP.priority2?`<div style="font-size:13px;color:var(--text2);font-weight:600;margin-bottom:6px;">② ${thisWP.priority2}</div>`:''}
+      ${thisWP.focus?`<div style="font-size:13px;font-weight:700;margin-bottom:4px;color:var(--accent);">▶ ${thisWP.focus}</div>`:''}
+      ${thisWP.well?`<div style="font-size:12px;color:var(--green);margin-bottom:4px;">✓ ${thisWP.well}</div>`:''}
       ${thisWP.constraints?`<div style="font-size:12px;color:var(--yellow);">⚠️ 制約: ${thisWP.constraints}</div>`:''}
-    `:`<div style="font-size:12px;color:var(--text3);">今週の週次計画がありません。<button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 立てる</button></div>`}
+    `:`<div style="font-size:12px;color:var(--text3);">今週の週間内省がありません。<button class="btn btn-ghost btn-sm" style="margin-left:8px;" onclick="openWeekPlanModal()">＋ 記録する</button></div>`}
   </div>`:'';
 
   // ── 通し記録 ──
@@ -4529,20 +4559,22 @@ async function saveRoutineAsImage(btn){
   const gridOrder=['FX','VT','PH','PB','SR','HB'];
   const today=localDate().replace(/-/g,'.');
 
-  // A4横比率 1500×1060px、scale:2で高解像度出力
+  // A4横比率 1500×1060px
   const W=1500,H=1060,PAD=22;
-  const PAGE_HDR=50;
-  const HDR_H=32;   // 種目名バー
-  const SUM_H=48;   // スコアサマリーバー
-  const TH_H=24;    // テーブルヘッダー
-  const CARD_H=Math.floor((H-PAD*2-PAGE_HDR-8*2)/3); // ≈316px
-  const ROW_H=28;   // 技1行の高さ（実際の技のみ、空行なし）
+  const PAGE_HDR=60; // タイトル高さ（margin-bottom:10込み）
+  const HDR_H=32;    // 種目名バー
+  const SUM_H=48;    // スコアサマリーバー
+  const TH_H=24;     // テーブルヘッダー
+  // カード高さ: 余白・ギャップを正確に除いて3等分
+  const CARD_H=Math.floor((H-PAD*2-PAGE_HDR-8*2)/3); // ≈ 310px
+  // 8技が必ず収まる行高を動的計算
+  const ROW_H=Math.floor((CARD_H-HDR_H-SUM_H-TH_H)/8); // ≈ 25-26px
 
   function buildApp(app){
     const c=AC[app];
     const appData=r[app]||{elements:[]};
 
-    // ── 跳馬: コンパクトカード2枚 ──
+    // ── 跳馬 ──
     if(app==='VT'){
       const v1=appData.vault1,v2=appData.vault2;
       const d1=v1?(+v1.vd).toFixed(1):'—';
@@ -4570,15 +4602,15 @@ async function saveRoutineAsImage(btn){
     const egL=v=>v===0?'—':v.toFixed(1);
     const egC=v=>v===0?T3:v===0.3?'#d97706':'#059669';
 
-    // サマリーバー: 左に細かい内訳、右端にD得点大きく
+    // サマリーバー: 左に内訳7セル、右端にD得点（幅を絞って要素名列を広く）
     const leftItems=[
-      {l:'難度点',v:calc.dvSum.toFixed(1),col:T1},
-      {l:'要求',  v:calc.egBonus.toFixed(1),col:T1},
-      {l:'加点',  v:calc.cv.toFixed(1),col:T1},
-      {l:'Ⅰ', v:egL(calc.egScores.I),  col:egC(calc.egScores.I)},
-      {l:'Ⅱ', v:egL(calc.egScores.II), col:egC(calc.egScores.II)},
-      {l:'Ⅲ', v:egL(calc.egScores.III),col:egC(calc.egScores.III)},
-      {l:'Ⅳ', v:egL(calc.egScores.IV), col:egC(calc.egScores.IV)},
+      {l:'難度点',v:calc.dvSum.toFixed(1),   col:T1},
+      {l:'要求',  v:calc.egBonus.toFixed(1),  col:T1},
+      {l:'加点',  v:calc.cv.toFixed(1),        col:T1},
+      {l:'Ⅰ',    v:egL(calc.egScores.I),      col:egC(calc.egScores.I)},
+      {l:'Ⅱ',    v:egL(calc.egScores.II),     col:egC(calc.egScores.II)},
+      {l:'Ⅲ',    v:egL(calc.egScores.III),    col:egC(calc.egScores.III)},
+      {l:'Ⅳ',    v:egL(calc.egScores.IV),     col:egC(calc.egScores.IV)},
     ];
     const leftHtml=leftItems.map(({l,v,col})=>`
       <div style="display:flex;flex-direction:column;align-items:center;justify-content:center;flex:1;height:${SUM_H}px;box-sizing:border-box;border-right:1px solid ${BORDER};">
@@ -4586,23 +4618,23 @@ async function saveRoutineAsImage(btn){
         <div style="font-size:12px;font-weight:700;color:${col};">${v}</div>
       </div>`).join('');
 
+    // D得点パネル: 幅64pxに絞る、フォント20px
     const summaryHtml=`
       <div style="display:flex;flex:1;background:${BG2};">${leftHtml}</div>
-      <div style="width:76px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${c}14;border-left:2px solid ${c}40;">
-        <div style="font-size:9px;color:${c};font-weight:700;letter-spacing:.3px;margin-bottom:3px;">D 得 点</div>
-        <div style="font-size:22px;font-weight:900;color:${c};line-height:1;">${calc.dScore.toFixed(1)}</div>
+      <div style="width:64px;flex-shrink:0;display:flex;flex-direction:column;align-items:center;justify-content:center;background:${c}14;border-left:2px solid ${c}40;">
+        <div style="font-size:8.5px;color:${c};font-weight:700;letter-spacing:.3px;margin-bottom:2px;">D得点</div>
+        <div style="font-size:20px;font-weight:900;color:${c};line-height:1;">${calc.dScore.toFixed(1)}</div>
       </div>`;
 
-    // 実際の技だけ表示（空行なし・上限8技）
-    const visElems=elems.slice(0,8);
-    const rowsHtml=visElems.map((e,i)=>`
+    // 実際の技のみ（上限8技、空行なし）
+    const rowsHtml=elems.slice(0,8).map((e,i)=>`
       <tr style="height:${ROW_H}px;background:${i%2===0?BG:BG2};">
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 6px;font-size:11px;color:${T3};text-align:center;font-weight:600;">${i+1}</td>
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 10px;font-size:13px;color:${T1};">${e.nameJa||''}</td>
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:15px;font-weight:800;text-align:center;color:${T1};">${e.dvL||DV_LETTER(e.dv)}</td>
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${(+e.dv).toFixed(1)}</td>
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:${T2};text-align:center;">${EG_ROMAN[e.eg]||e.eg}</td>
-        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:12px;color:#059669;text-align:center;font-weight:700;">${+e.cv>0?'+'+e.cv:''}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 5px;font-size:11px;color:${T3};text-align:center;font-weight:600;">${i+1}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 8px;font-size:13px;color:${T1};">${e.nameJa||''}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 4px;font-size:13px;font-weight:800;text-align:center;color:${T1};">${e.dvL||DV_LETTER(e.dv)}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 4px;font-size:11px;color:${T2};text-align:center;">${(+e.dv).toFixed(1)}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 4px;font-size:11px;color:${T2};text-align:center;">${EG_ROMAN[e.eg]||e.eg}</td>
+        <td style="border-bottom:1px solid ${BORDER}44;padding:0 4px;font-size:11px;color:#059669;text-align:center;font-weight:700;">${+e.cv>0?'+'+e.cv:''}</td>
       </tr>`).join('');
 
     return `<div style="border:1.5px solid ${c}44;border-radius:7px;overflow:hidden;height:${CARD_H}px;box-sizing:border-box;">
@@ -4610,19 +4642,18 @@ async function saveRoutineAsImage(btn){
       <div style="display:flex;border-bottom:1.5px solid ${BORDER};height:${SUM_H}px;">${summaryHtml}</div>
       <table style="width:100%;border-collapse:collapse;table-layout:fixed;">
         <thead><tr style="background:${BG2};height:${TH_H}px;">
-          <th style="padding:0 6px;font-size:10px;color:${T3};text-align:center;width:28px;border-bottom:2px solid ${BORDER};">#</th>
-          <th style="padding:0 10px;font-size:10px;color:${T3};text-align:left;border-bottom:2px solid ${BORDER};">要素名</th>
-          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:36px;border-bottom:2px solid ${BORDER};">難度</th>
-          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:42px;border-bottom:2px solid ${BORDER};">DV</th>
-          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">EG</th>
-          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:34px;border-bottom:2px solid ${BORDER};">CV</th>
+          <th style="padding:0 5px;font-size:10px;color:${T3};text-align:center;width:26px;border-bottom:2px solid ${BORDER};">#</th>
+          <th style="padding:0 8px;font-size:10px;color:${T3};text-align:left;border-bottom:2px solid ${BORDER};">要素名</th>
+          <th style="padding:0 4px;font-size:10px;color:${T3};text-align:center;width:32px;border-bottom:2px solid ${BORDER};">難度</th>
+          <th style="padding:0 4px;font-size:10px;color:${T3};text-align:center;width:38px;border-bottom:2px solid ${BORDER};">DV</th>
+          <th style="padding:0 4px;font-size:10px;color:${T3};text-align:center;width:30px;border-bottom:2px solid ${BORDER};">EG</th>
+          <th style="padding:0 4px;font-size:10px;color:${T3};text-align:center;width:30px;border-bottom:2px solid ${BORDER};">CV</th>
         </tr></thead>
         <tbody>${rowsHtml}</tbody>
       </table>
     </div>`;
   }
 
-  // オフスクリーンコンテナ（A4横比率・固定サイズ）
   const wrap=document.createElement('div');
   wrap.style.cssText=[
     'position:fixed','left:-9999px','top:0',
@@ -4635,7 +4666,7 @@ async function saveRoutineAsImage(btn){
   ].join(';');
 
   wrap.innerHTML=`
-    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;border-bottom:2px solid ${T1};padding-bottom:8px;height:${PAGE_HDR}px;box-sizing:border-box;">
+    <div style="display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:10px;border-bottom:2px solid ${T1};padding-bottom:8px;height:50px;box-sizing:border-box;">
       <div>
         <div style="font-size:20px;font-weight:800;color:${T1};letter-spacing:.5px;">演技構成表</div>
         <div style="font-size:12px;color:${T2};margin-top:3px;">${r.name||''}</div>
