@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260717_081414';
+const _APP_VER='20260717_082243';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -916,11 +916,6 @@ canvas{max-height:240px}
 
       <div class="journal-section-header">🎯 今日のフォーカス</div>
       <div class="form-group"><label>今日のテーマ</label><div contenteditable="true" id="j-theme" class="rich-field" data-ph="例：後転とびの踏み切りタイミングを固める" oninput="scheduleAutoSave()"></div></div>
-      <div class="form-group"><label>全体の意識ポイント</label><div contenteditable="true" id="j-overall-focus" class="rich-field" data-ph="例：踏み切りで膝をしっかり伸ばす" oninput="scheduleAutoSave()"></div></div>
-
-      <div class="journal-section-header">🔄 アップ</div>
-      <div class="form-group"><label>意識ポイント</label><div contenteditable="true" id="j-warmup-focus" class="rich-field" data-ph="例：肩甲骨の可動域を意識して動かす" oninput="scheduleAutoSave()"></div></div>
-
       <div class="journal-section-header">🤸 種目別・意識ポイント</div>
       <div id="j-apparatus-plan">
         <div style="font-size:12px;color:var(--text3);padding:6px 0 12px;">↑ 上の種目チップを選択するとここに入力欄が表示されます</div>
@@ -990,9 +985,6 @@ canvas{max-height:240px}
           <div class="cond-dot" onclick="setAchievement(5)" data-v="5">★5</div>
         </div>
       </div>
-
-      <div class="journal-section-header">🔄 アップ</div>
-      <div class="form-group"><label>振り返り・アクション</label><div contenteditable="true" id="j-warmup-review" class="rich-field" data-ph="例：体がよく動いた。次回も同じルーティンで" oninput="scheduleAutoSave()"></div></div>
 
       <div class="journal-section-header">🤸 種目別・振り返り</div>
       <div id="j-apparatus-review">
@@ -2493,8 +2485,7 @@ function openJournalModal(editId){
   const today=localDate();
 
   // フォームリセット（前回セッションの残留データを完全クリア）
-  ['j-theme','j-overall-focus','j-overall-review','j-overall-action',
-   'j-warmup-focus','j-warmup-review','j-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ['j-theme','j-overall-review','j-overall-action','j-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   ['j-duration','j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('j-edit-id').value=editId||'';
   document.getElementById('j-consult-zone').style.display='none';
@@ -2520,11 +2511,8 @@ function openJournalModal(editId){
       journalMental=j.mental||0;
       journalAchievement=j.achievement||0;
       document.getElementById('j-theme').innerHTML=j.theme||'';
-      document.getElementById('j-overall-focus').innerHTML=j.overallFocus||j.focusPoints||'';
       document.getElementById('j-overall-review').innerHTML=j.overallReview||j.goodPoints||'';
       document.getElementById('j-overall-action').innerHTML=j.overallAction||j.nextAction||'';
-      document.getElementById('j-warmup-focus').innerHTML=j.warmupFocus||'';
-      document.getElementById('j-warmup-review').innerHTML=j.warmupReview||'';
       document.getElementById('j-notes').innerHTML=j.notes||'';
       document.getElementById('j-constraints').value=j.constraints||'';
       if(j.constraints){document.getElementById('j-consult-zone').style.display='';if(det)det.setAttribute('open','');}
@@ -2534,7 +2522,7 @@ function openJournalModal(editId){
       const existRt=(DB.runThroughs||[]).find(r=>r.date===j.date);
       if(existRt)_jRtResults=Object.assign({},existRt.results||{});
       // 練習計画が記入済みなら振り返りタブで開く
-      if(j.theme||j.overallFocus||j.warmupFocus||(j.apparatus&&j.apparatus.length>0&&j.overallReview))openOnReview=true;
+      if(j.theme||(j.apparatus&&j.apparatus.length>0&&j.overallReview))openOnReview=true;
     }
   } else {
     document.getElementById('j-date').value=today;
@@ -2604,8 +2592,8 @@ function scheduleAutoSave(){
     const entry={
       ...(existing||{}),
       id:autoId,date,apparatus:[...jApparatus],
-      theme:g('j-theme'),overallFocus:g('j-overall-focus'),warmupFocus:g('j-warmup-focus'),
-      overallReview:g('j-overall-review'),overallAction:g('j-overall-action'),warmupReview:g('j-warmup-review'),
+      theme:g('j-theme'),
+      overallReview:g('j-overall-review'),overallAction:g('j-overall-action'),
       notes:g('j-notes'),constraints:g('j-constraints'),
       duration:+document.getElementById('j-duration')?.value||0,
       condition:journalCondition,mental:journalMental,achievement:journalAchievement,
@@ -2718,14 +2706,10 @@ function renderPreSummary(){
   if(!el)return;
   const _rf=id=>{const e=document.getElementById(id);return e?e.innerText||'':'';}
   const theme=_rf('j-theme');
-  const focus=_rf('j-overall-focus');
-  const warmupFocus=_rf('j-warmup-focus');
   const appFocuses=APPARATUS_M.filter(a=>jApparatus.has(a)&&jApparatusNoteData[a]?.focus);
-  if(!theme&&!focus&&!warmupFocus&&!appFocuses.length){el.style.display='none';return;}
+  if(!theme&&!appFocuses.length){el.style.display='none';return;}
   const parts=[];
   if(theme)parts.push(`<div style="font-size:14px;font-weight:700;margin-bottom:6px;">📌 ${escAttr(theme)}</div>`);
-  if(focus)parts.push(`<div style="font-size:12px;color:var(--accent2);margin-bottom:4px;">👁 全体: ${escAttr(focus)}</div>`);
-  if(warmupFocus)parts.push(`<div style="font-size:12px;color:var(--text2);margin-bottom:4px;">🔄 アップ: ${escAttr(warmupFocus)}</div>`);
   if(appFocuses.length){
     parts.push(`<div style="margin-top:6px;display:flex;flex-wrap:wrap;gap:5px;">${appFocuses.map(a=>{
       const color=APP_COLORS[a]||'#6366f1';
@@ -2752,8 +2736,6 @@ function savePracticePlan(){
     id:newId, date,
     apparatus:[...jApparatus],
     theme:g('j-theme'),
-    overallFocus:g('j-overall-focus'),
-    warmupFocus:g('j-warmup-focus'),
     constraints:g('j-constraints'),
     consultAnswers:{weeksToComp:g('j-c1'),canDo:g('j-c2'),priority:g('j-c3'),sensation:g('j-c4')},
     apparatusNotes,
@@ -2891,7 +2873,6 @@ function renderJournalList(){
     // 後方互換（旧フィールド）
     const overallReview=j.overallReview||j.goodPoints||'';
     const overallAction=j.overallAction||j.nextAction||'';
-    const overallFocus=j.overallFocus||j.focusPoints||'';
     return `<div class="jlog-card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;">
         <div class="jlog-header" style="flex:1;min-width:0;">
@@ -2910,7 +2891,6 @@ function renderJournalList(){
       </div>
       ${j.constraints?`<div style="font-size:11px;color:var(--yellow);margin-bottom:4px;">⚠️ 制約: ${j.constraints}</div>`:''}
       <div class="jlog-theme">${j.theme||'(テーマなし)'}</div>
-      ${overallFocus?`<div style="font-size:12px;color:var(--accent2);margin-top:3px;">👁 ${overallFocus}</div>`:''}
       ${overallReview?`<div style="font-size:12px;color:var(--text2);margin-top:3px;">💬 ${overallReview}</div>`:''}
       ${appNoteHtml?`<div style="margin-top:6px;padding-top:6px;border-top:1px solid var(--border);">${appNoteHtml}</div>`:''}
       ${overallAction?`<div class="jlog-next">▶ 次回: ${overallAction}</div>`:''}
