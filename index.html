@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260717_074614';
+const _APP_VER='20260717_080519';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1734,7 +1734,14 @@ function startFirebaseSync(){
     if(_fbListening) return;
     console.log('[Auth] state: user', user.uid);
     _fbListening = true;
-    _startFBSync();
+    // トークンを明示的に取得してからDB接続（タイミング問題対策）
+    user.getIdToken(true).then(token=>{
+      console.log('[Auth] token ok, starting sync');
+      _startFBSync();
+    }).catch(e=>{
+      console.error('[Auth] token error:', e.code);
+      setSyncStatus('offline');
+    });
   });
 }
 function _startFBSync(){
