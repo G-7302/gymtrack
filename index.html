@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260713_073651';
+const _APP_VER='20260717_073211';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -24,6 +24,7 @@ if(_stored!==_APP_VER&&!location.search.includes('_v=')){
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-database-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-auth-compat.js"></script>
 <style>
 :root{
   --bg:#07090f;
@@ -1719,7 +1720,15 @@ function saveDB(){
 
 function startFirebaseSync(){
   if(_fbListening) return;
-  _fbListening = true;
+  // 匿名認証してからDB接続
+  firebase.auth().signInAnonymously().catch(e=>console.warn('auth error',e));
+  firebase.auth().onAuthStateChanged(user=>{
+    if(!user || _fbListening) return;
+    _fbListening = true;
+    _startFBSync();
+  });
+}
+function _startFBSync(){
   // 接続状態の監視
   fbDB.ref('.info/connected').on('value', snap=>{
     if(!snap.val()) setSyncStatus('offline');
