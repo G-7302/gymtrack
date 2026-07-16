@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260717_080519';
+const _APP_VER='20260717_081414';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1722,26 +1722,12 @@ function startFirebaseSync(){
   if(_fbListening) return;
   setSyncStatus('connecting');
   firebase.auth().signInAnonymously()
-    .then(cred=>console.log('[Auth] signed in uid:', cred.user.uid))
-    .catch(e=>{
-      console.error('[Auth] signInAnonymously failed:', e.code, e.message);
-      const el=document.getElementById('sync-status');
-      if(el) el.title='auth error: '+e.code;
-      setSyncStatus('offline');
-    });
+    .catch(e=>{ setSyncStatus('offline'); });
   firebase.auth().onAuthStateChanged(user=>{
-    if(!user){console.log('[Auth] state: null');return;}
-    if(_fbListening) return;
-    console.log('[Auth] state: user', user.uid);
+    if(!user || _fbListening) return;
     _fbListening = true;
     // トークンを明示的に取得してからDB接続（タイミング問題対策）
-    user.getIdToken(true).then(token=>{
-      console.log('[Auth] token ok, starting sync');
-      _startFBSync();
-    }).catch(e=>{
-      console.error('[Auth] token error:', e.code);
-      setSyncStatus('offline');
-    });
+    user.getIdToken(true).then(()=>_startFBSync()).catch(()=>setSyncStatus('offline'));
   });
 }
 function _startFBSync(){
@@ -1764,7 +1750,7 @@ function _startFBSync(){
       // クラウドが空→ローカルデータをアップロード
       FB_REF.set(JSON.parse(JSON.stringify(DB)))
         .then(()=>setSyncStatus('synced'))
-        .catch(e=>{console.error('[DB] set error:',e.code);setSyncStatus('offline');});
+        .catch(()=>setSyncStatus('offline'));
     }
     // 以降はリアルタイムで他端末の変更を受信
     FB_REF.on('value', snap=>{
@@ -1782,8 +1768,8 @@ function _startFBSync(){
       else if(cur==='plan') renderPlanList();
       else if(cur==='results') renderResultsPage();
       else if(cur==='routine') renderRoutinePage();
-    }, e=>console.error('[DB] on error:',e.code, e.message));
-  }).catch(e=>{console.error('[DB] once error:',e.code, e.message);setSyncStatus('offline');});
+    });
+  }).catch(()=>setSyncStatus('offline'));
 }
 
 // ---- THEME ----
