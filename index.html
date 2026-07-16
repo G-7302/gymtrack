@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260717_073935';
+const _APP_VER='20260717_074614';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1720,10 +1720,19 @@ function saveDB(){
 
 function startFirebaseSync(){
   if(_fbListening) return;
-  // 匿名認証してからDB接続
-  firebase.auth().signInAnonymously().catch(e=>console.warn('auth error',e));
+  setSyncStatus('connecting');
+  firebase.auth().signInAnonymously()
+    .then(cred=>console.log('[Auth] signed in uid:', cred.user.uid))
+    .catch(e=>{
+      console.error('[Auth] signInAnonymously failed:', e.code, e.message);
+      const el=document.getElementById('sync-status');
+      if(el) el.title='auth error: '+e.code;
+      setSyncStatus('offline');
+    });
   firebase.auth().onAuthStateChanged(user=>{
-    if(!user || _fbListening) return;
+    if(!user){console.log('[Auth] state: null');return;}
+    if(_fbListening) return;
+    console.log('[Auth] state: user', user.uid);
     _fbListening = true;
     _startFBSync();
   });
@@ -1748,7 +1757,7 @@ function _startFBSync(){
       // クラウドが空→ローカルデータをアップロード
       FB_REF.set(JSON.parse(JSON.stringify(DB)))
         .then(()=>setSyncStatus('synced'))
-        .catch(()=>setSyncStatus('offline'));
+        .catch(e=>{console.error('[DB] set error:',e.code);setSyncStatus('offline');});
     }
     // 以降はリアルタイムで他端末の変更を受信
     FB_REF.on('value', snap=>{
@@ -1766,8 +1775,8 @@ function _startFBSync(){
       else if(cur==='plan') renderPlanList();
       else if(cur==='results') renderResultsPage();
       else if(cur==='routine') renderRoutinePage();
-    });
-  }).catch(()=>setSyncStatus('offline'));
+    }, e=>console.error('[DB] on error:',e.code, e.message));
+  }).catch(e=>{console.error('[DB] once error:',e.code, e.message);setSyncStatus('offline');});
 }
 
 // ---- THEME ----
