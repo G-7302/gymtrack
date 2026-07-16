@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260717_073211';
+const _APP_VER='20260717_073935';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1731,7 +1731,7 @@ function startFirebaseSync(){
 function _startFBSync(){
   // 接続状態の監視
   fbDB.ref('.info/connected').on('value', snap=>{
-    if(!snap.val()) setSyncStatus('offline');
+    setSyncStatus(snap.val() ? 'synced' : 'offline');
   });
   // クラウドのデータを読み込んでリアルタイム同期
   FB_REF.once('value').then(snap=>{
