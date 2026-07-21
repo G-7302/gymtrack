@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260721_094451';
+const _APP_VER='20260721_095044';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1633,8 +1633,13 @@ function setDayMenuOverride(dateStr,menuType){
   }
   saveDB();
   renderDashboardCalendar();
-  // 大会計画ページが表示中なら再描画
-  if(document.getElementById('page-plan')?.classList.contains('active'))renderPlanList();
+  // 大会計画ページが表示中なら再描画（スクロール位置を保持）
+  if(document.getElementById('page-plan')?.classList.contains('active')){
+    const scroller=document.getElementById('content');
+    const sy=scroller?scroller.scrollTop:window.scrollY;
+    renderPlanList();
+    requestAnimationFrame(()=>{if(scroller)scroller.scrollTop=sy;else window.scrollTo(0,sy);});
+  }
   // 日誌モーダルが開いていれば表示も更新
   const jDate=document.getElementById('j-date')?.value;
   if(jDate===dateStr)onJDateChange();
