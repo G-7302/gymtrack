@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260721_102141';
+const _APP_VER='20260721_132916';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1632,9 +1632,13 @@ function setDayMenuOverride(dateStr,menuType){
     DB.dayOverrides[dateStr]=menuType;
   }
   saveDB();
+  // ダッシュボードカレンダーは丸ごと再描画
   renderDashboardCalendar();
-  // 大会計画ページが表示中なら再描画
-  if(document.getElementById('page-plan')?.classList.contains('active'))renderPlanList();
+  // 大会計画ページのカレンダーセルは直接書き換え（再描画なし＝スクロール維持）
+  const newIcon=DAY_MENU_ICON[menuType]||'';
+  document.querySelectorAll(`.db-cal-menu[data-date="${dateStr}"]`).forEach(el=>{
+    el.textContent=newIcon+(menuType||'');
+  });
   // 日誌モーダルが開いていれば表示も更新
   const jDate=document.getElementById('j-date')?.value;
   if(jDate===dateStr)onJDateChange();
@@ -2144,7 +2148,7 @@ function buildCalendarHTML(y, m, {onDayClick='calDayClick', onMonClick='calMonCl
         ${weekBadge}
         ${hasWP?`<div class="db-cal-wp" onclick="event.stopPropagation();openWeekPlanModal('${ds}')" title="週間内省">📓</div>`:''}
         <div class="db-cal-num">${dayNum}</div>
-        <div class="db-cal-menu" onclick="event.stopPropagation();showMenuPicker('${ds}',this)" title="メニュー変更">${menuIcon}${menuType||''}</div>
+        <div class="db-cal-menu" data-date="${ds}" onclick="event.stopPropagation();showMenuPicker('${ds}',this)" title="メニュー変更">${menuIcon}${menuType||''}</div>
         ${stars?`<div class="db-cal-stars">${stars}</div>`:''}
         ${appDots?`<div class="db-cal-apps">${appDots}</div>`:''}
         ${comps.map(c=>`<div class="db-cal-comp" onclick="event.stopPropagation();" title="${c.name}">🏆${c.name}</div>`).join('')}
