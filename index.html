@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260721_101219';
+const _APP_VER='20260721_102141';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1633,15 +1633,8 @@ function setDayMenuOverride(dateStr,menuType){
   }
   saveDB();
   renderDashboardCalendar();
-  // 大会計画ページが表示中なら再描画（スクロール位置を保持）
-  if(document.getElementById('page-plan')?.classList.contains('active')){
-    const scroller=document.getElementById('content');
-    const sy=scroller?scroller.scrollTop:window.scrollY;
-    renderPlanList();
-    const restoreScroll=()=>{if(scroller)scroller.scrollTop=sy;else window.scrollTo(0,sy);};
-    restoreScroll();
-    requestAnimationFrame(()=>{restoreScroll();requestAnimationFrame(restoreScroll);});
-  }
+  // 大会計画ページが表示中なら再描画
+  if(document.getElementById('page-plan')?.classList.contains('active'))renderPlanList();
   // 日誌モーダルが開いていれば表示も更新
   const jDate=document.getElementById('j-date')?.value;
   if(jDate===dateStr)onJDateChange();
@@ -3737,6 +3730,9 @@ function renderPlanSwitcher(comps){
   setTimeout(()=>{const active=sw.querySelector('.psw-pill.active');if(active)active.scrollIntoView({inline:'center',behavior:'smooth',block:'nearest'});},50);
 }
 function renderPlanList(){
+  const _content=document.getElementById('content');
+  const _sc=_content?_content.scrollTop:0;
+  if(document.activeElement&&document.activeElement!==document.body)document.activeElement.blur();
   const today=localDate();
   const comps=getPlanComps();
   const el=document.getElementById('plan-list');
@@ -3748,6 +3744,8 @@ function renderPlanList(){
   currentPlanIdx=Math.max(0,Math.min(comps.length-1,currentPlanIdx));
   renderPlanSwitcher(comps);
   el.innerHTML=planCard(comps[currentPlanIdx],today);
+  if(_content)_content.scrollTop=_sc;
+  requestAnimationFrame(()=>{if(_content)_content.scrollTop=_sc;});
 }
 function renderResultsPage(){
   const sorted=[...DB.competitions].sort((a,b)=>b.date.localeCompare(a.date));
