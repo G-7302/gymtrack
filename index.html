@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260721_095044';
+const _APP_VER='20260721_101219';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1638,7 +1638,9 @@ function setDayMenuOverride(dateStr,menuType){
     const scroller=document.getElementById('content');
     const sy=scroller?scroller.scrollTop:window.scrollY;
     renderPlanList();
-    requestAnimationFrame(()=>{if(scroller)scroller.scrollTop=sy;else window.scrollTo(0,sy);});
+    const restoreScroll=()=>{if(scroller)scroller.scrollTop=sy;else window.scrollTo(0,sy);};
+    restoreScroll();
+    requestAnimationFrame(()=>{restoreScroll();requestAnimationFrame(restoreScroll);});
   }
   // 日誌モーダルが開いていれば表示も更新
   const jDate=document.getElementById('j-date')?.value;
