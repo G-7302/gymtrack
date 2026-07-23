@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260721_132916';
+const _APP_VER='20260724_065741';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -975,7 +975,6 @@ canvas{max-height:240px}
 
       <div class="journal-section-header">💬 振り返り</div>
       <div class="form-group"><label>全体の振り返り</label><div contenteditable="true" id="j-overall-review" class="rich-field" data-ph="例：3本中2本決まった。踏み切り位置が安定してきた" oninput="scheduleAutoSave()"></div></div>
-      <div class="form-group"><label>次のアクション</label><div contenteditable="true" id="j-overall-action" class="rich-field" data-ph="例：通しに組み込んで本番に近い状況で確認する" oninput="scheduleAutoSave()"></div></div>
       <div class="form-group"><label>達成度</label>
         <div class="cond-dots" id="j-achievement-dots">
           <div class="cond-dot" onclick="setAchievement(1)" data-v="1">★1</div>
@@ -1027,15 +1026,15 @@ canvas{max-height:240px}
 
     <div class="form-group">
       <label>① 今週うまくできたこと</label>
-      <textarea id="wp-well" placeholder="例：ゆかの前方宙返りの踏み切りタイミングが安定してきた" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+      <div contenteditable="true" id="wp-well" class="rich-field" data-ph="例：ゆかの前方宙返りの踏み切りタイミングが安定してきた" style="min-height:64px;"></div>
     </div>
     <div class="form-group">
       <label>② 今週改善できたこと</label>
-      <textarea id="wp-improve" placeholder="例：あん馬のロシアン転向でバランスを崩すことが多かった" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+      <div contenteditable="true" id="wp-improve" class="rich-field" data-ph="例：あん馬のロシアン転向でバランスを崩すことが多かった" style="min-height:64px;"></div>
     </div>
     <div class="form-group">
       <label>③ 来週最も集中すべき課題（②の中から）</label>
-      <textarea id="wp-focus" placeholder="例：あん馬ロシアン転向の体軸を安定させる" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+      <div contenteditable="true" id="wp-focus" class="rich-field" data-ph="例：あん馬ロシアン転向の体軸を安定させる" style="min-height:64px;"></div>
     </div>
 
     <!-- 来週の計画 -->
@@ -1058,7 +1057,7 @@ canvas{max-height:240px}
 
     <div class="form-group">
       <label>来週の制約（怪我・疲労・施設など）</label>
-      <textarea id="wp-constraints" placeholder="例：左手の甲が痛いため手をつく技は制限" style="min-height:64px;resize:none;overflow:hidden;" oninput="autoGrow(this)"></textarea>
+      <div contenteditable="true" id="wp-constraints" class="rich-field" data-ph="例：左手の甲が痛いため手をつく技は制限" style="min-height:64px;"></div>
     </div>
 
     <div style="display:flex;gap:10px;justify-content:flex-end;margin-top:4px;">
@@ -1980,7 +1979,6 @@ function renderDashboard(){
     <div class="timeline-item"><div class="timeline-dot"></div><div class="timeline-body">
       <div class="timeline-date">${recent.date}${recent.duration?' · ⏱️'+recent.duration+'分':''}</div>
       <div class="timeline-title">${recent.theme||'(テーマなし)'}</div>
-      ${recent.nextAction?`<div style="font-size:12px;color:var(--accent2);margin-top:4px;">▶ 次回: ${recent.nextAction}</div>`:''}
       ${recent.issues?`<div style="font-size:12px;color:var(--text2);margin-top:4px;">△ ${recent.issues}</div>`:''}
     </div></div>
     ${wp?`<div style="margin-top:10px;padding:8px 10px;background:var(--surface2);border-radius:var(--radius-sm);font-size:12px;">
@@ -2491,7 +2489,7 @@ function openJournalModal(editId){
   const today=localDate();
 
   // フォームリセット（前回セッションの残留データを完全クリア）
-  ['j-theme','j-overall-review','j-overall-action','j-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
+  ['j-theme','j-overall-review','j-notes'].forEach(id=>{const el=document.getElementById(id);if(el)el.innerHTML='';});
   ['j-duration','j-constraints','j-c1','j-c2','j-c3','j-c4'].forEach(id=>{const el=document.getElementById(id);if(el)el.value='';});
   document.getElementById('j-edit-id').value=editId||'';
   document.getElementById('j-consult-zone').style.display='none';
@@ -2518,7 +2516,6 @@ function openJournalModal(editId){
       journalAchievement=j.achievement||0;
       document.getElementById('j-theme').innerHTML=j.theme||'';
       document.getElementById('j-overall-review').innerHTML=j.overallReview||j.goodPoints||'';
-      document.getElementById('j-overall-action').innerHTML=j.overallAction||j.nextAction||'';
       document.getElementById('j-notes').innerHTML=j.notes||'';
       document.getElementById('j-constraints').value=j.constraints||'';
       if(j.constraints){document.getElementById('j-consult-zone').style.display='';if(det)det.setAttribute('open','');}
@@ -2554,7 +2551,7 @@ function autoGrowAll(root){(root||document).querySelectorAll('textarea').forEach
 // ── 書式コンテキストメニュー ──
 (function(){
   document.addEventListener('contextmenu',e=>{
-    if(!e.target.closest('#modal-journal'))return;
+    if(!e.target.closest('#modal-journal')&&!e.target.closest('#modal-weekplan'))return;
     const field=e.target.closest('.rich-field');
     if(!field)return;
     e.preventDefault();
@@ -2599,7 +2596,7 @@ function scheduleAutoSave(){
       ...(existing||{}),
       id:autoId,date,apparatus:[...jApparatus],
       theme:g('j-theme'),
-      overallReview:g('j-overall-review'),overallAction:g('j-overall-action'),
+      overallReview:g('j-overall-review'),
       notes:g('j-notes'),constraints:g('j-constraints'),
       duration:+document.getElementById('j-duration')?.value||0,
       condition:journalCondition,mental:journalMental,achievement:journalAchievement,
@@ -2812,11 +2809,7 @@ function saveJournalEntry(){
     apparatus:[...jApparatus], condition:journalCondition, mental:journalMental,
     achievement:journalAchievement,
     theme:g('j-theme'),
-    overallFocus:g('j-overall-focus'),
     overallReview:g('j-overall-review'),
-    overallAction:g('j-overall-action'),
-    warmupFocus:g('j-warmup-focus'),
-    warmupReview:g('j-warmup-review'),
     apparatusNotes,
     constraints:g('j-constraints'),
     consultAnswers:{weeksToComp:g('j-c1'),canDo:g('j-c2'),priority:g('j-c3'),sensation:g('j-c4')},
@@ -2878,7 +2871,7 @@ function renderJournalList(){
     }).join('');
     // 後方互換（旧フィールド）
     const overallReview=j.overallReview||j.goodPoints||'';
-    const overallAction=j.overallAction||j.nextAction||'';
+    const overallAction='';
     return `<div class="jlog-card">
       <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:8px;margin-bottom:4px;">
         <div class="jlog-header" style="flex:1;min-width:0;">
@@ -2921,16 +2914,10 @@ function openWeekPlanModal(weekStart, prefillNote){
   document.getElementById('wp-phase').value=autoPhase;
 
   // 振り返りフィールド
-  const wellEl=document.getElementById('wp-well');
-  const improveEl=document.getElementById('wp-improve');
-  const focusEl=document.getElementById('wp-focus');
-  const constEl=document.getElementById('wp-constraints');
-  wellEl.value=wp.well||'';
-  improveEl.value=wp.improve||'';
-  focusEl.value=wp.focus||'';
-  constEl.value=wp.constraints||(prefillNote?prefillNote:'')||'';
-  // テキストエリア高さリセット
-  [wellEl,improveEl,focusEl,constEl].forEach(el=>{el.style.height='';autoGrow(el);});
+  document.getElementById('wp-well').innerHTML=wp.well||'';
+  document.getElementById('wp-improve').innerHTML=wp.improve||'';
+  document.getElementById('wp-focus').innerHTML=wp.focus||'';
+  document.getElementById('wp-constraints').innerHTML=wp.constraints||(prefillNote?prefillNote:'')||'';
 
   // 前週サマリー生成
   const prevWS=getPrevWeekStart(ws);
@@ -2968,27 +2955,27 @@ function wpSetRest(day){
 }
 
 function wpFillPhase(){
+  // フェーズ選択時のヒント（来週の制約欄が空なら提案）
   const phaseKey=document.getElementById('wp-phase').value;
-  // 優先課題もフェーズから
-  const phaseGoals={
-    training:{p1:'新技・難度上げにチャレンジする',p2:'量を積んで体力・基礎を底上げする'},
-    polishing:{p1:'演技の精度とEスコア向上に集中',p2:'弱点動作のパターンを修正する'},
-    adjustment:{p1:'通し演技の安定感を高める',p2:'怪我リスクを避けながら完成度を上げる'},
-    peaking:{p1:'身体のコンディションを最優先',p2:'感覚確認・イメージ練習中心'},
+  const hints={
+    training:'量を優先。疲労が溜まりやすいので睡眠・栄養に注意。',
+    polishing:'精度重視。通し本数を増やして安定感を出す。',
+    adjustment:'怪我リスクを避け、完成度を高める週。',
+    peaking:'コンディション最優先。感覚確認・イメージ中心。',
   };
-  const pg=phaseGoals[phaseKey];
-  if(pg&&!document.getElementById('wp-p1').value)document.getElementById('wp-p1').value=pg.p1;
-  if(pg&&!document.getElementById('wp-p2').value)document.getElementById('wp-p2').value=pg.p2;
+  const constEl=document.getElementById('wp-constraints');
+  if(constEl&&!constEl.innerHTML.trim())constEl.innerHTML=hints[phaseKey]||'';
 }
 function saveWeekPlan(){
   const ws=document.getElementById('wp-week-start').value;
+  const g=id=>{const el=document.getElementById(id);return el?el.innerHTML.trim():'';};
   const plan={
     id:ws, weekStart:ws,
     phase:document.getElementById('wp-phase').value,
-    well:document.getElementById('wp-well').value.trim(),
-    improve:document.getElementById('wp-improve').value.trim(),
-    focus:document.getElementById('wp-focus').value.trim(),
-    constraints:document.getElementById('wp-constraints').value.trim()
+    well:g('wp-well'),
+    improve:g('wp-improve'),
+    focus:g('wp-focus'),
+    constraints:g('wp-constraints')
   };
   if(!DB.weekPlans)DB.weekPlans=[];
   const idx=DB.weekPlans.findIndex(w=>w.weekStart===ws);
