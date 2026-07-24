@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260724_071512';
+const _APP_VER='20260724_093709';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -2641,9 +2641,7 @@ function syncApparatusNotesFromDOM(){
     } else {
       // 振り返りタブ：振り返り・アクションのみ（focusは読み取り専用なので触らない）
       const r=document.getElementById('j-app-review-'+a);
-      const ac=document.getElementById('j-app-action-'+a);
       if(r)jApparatusNoteData[a].review=r.value;
-      if(ac)jApparatusNoteData[a].action=ac.value;
     }
   });
 }
@@ -2697,8 +2695,6 @@ function renderApparatusNotesReview(){
       ${d.focus?`<div style="font-size:11px;color:var(--text3);padding:4px 8px;background:var(--surface2);border-radius:var(--radius-xs);margin-bottom:10px;line-height:1.5;">👁 ${escAttr(d.focus)}</div>`:''}
       <div class="form-group" style="margin-bottom:8px;"><label>振り返り</label>
         <textarea id="j-app-review-${a}" placeholder="例：3セット中2セット成功。疲れると崩れやすい" style="min-height:44px;resize:vertical;" oninput="scheduleAutoSave()">${escAttr(d.review)}</textarea></div>
-      <div class="form-group" style="margin-bottom:0;"><label>次のアクション</label>
-        <textarea id="j-app-action-${a}" placeholder="例：疲労時の練習を意識的に組み込む" style="min-height:44px;resize:vertical;" oninput="scheduleAutoSave()">${escAttr(d.action)}</textarea></div>
     </div>`;
   }).join('');
 }
