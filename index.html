@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260724_093709';
+const _APP_VER='20260725_071413';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -164,6 +164,9 @@ tr:hover td{background:rgba(255,255,255,.025);}
 .cond-dot.active-3{background:var(--yellow);border-color:var(--yellow);color:#000}
 .cond-dot.active-4{background:#84cc16;border-color:#84cc16;color:#fff}
 .cond-dot.active-5{background:var(--green);border-color:var(--green);color:#fff}
+.lt-btn{flex:1;padding:10px 8px;border-radius:var(--radius-sm);border:2px solid var(--border);background:var(--surface2);color:var(--text2);cursor:pointer;font-size:13px;font-weight:600;transition:all .15s;text-align:center;}
+.lt-btn.active-done{background:#22c55e;border-color:#22c55e;color:#fff;}
+.lt-btn.active-skip{background:#ef4444;border-color:#ef4444;color:#fff;}
 .notice{background:rgba(99,102,241,.07);border:1px solid rgba(99,102,241,.18);border-left:3px solid var(--accent);border-radius:0 var(--radius-sm) var(--radius-sm) 0;padding:11px 16px;font-size:12px;color:var(--accent2);margin-bottom:16px;line-height:1.6;}
 canvas{max-height:240px}
 .divider{border:none;border-top:1px solid var(--border);margin:20px 0}
@@ -829,6 +832,11 @@ canvas{max-height:240px}
     <div class="card"><div class="card-title">🧠 メンタル推移</div><canvas id="chart-mental"></canvas></div>
   </div>
   <div class="card"><div class="card-title">📈 技習熟度の推移</div><canvas id="chart-skill-trend" style="max-height:200px;"></canvas></div>
+  <div class="card" style="margin-top:20px;">
+    <div class="card-title">🏋️ 長期枠練習 実施率（週別）</div>
+    <div id="lt-summary" style="font-size:12px;color:var(--text2);margin-bottom:12px;"></div>
+    <canvas id="chart-lt-slot" style="max-height:180px;"></canvas>
+  </div>
 </div>
 
 <!-- RUNTHROUGH -->
@@ -982,6 +990,13 @@ canvas{max-height:240px}
           <div class="cond-dot" onclick="setAchievement(3)" data-v="3">★3</div>
           <div class="cond-dot" onclick="setAchievement(4)" data-v="4">★4</div>
           <div class="cond-dot" onclick="setAchievement(5)" data-v="5">★5</div>
+        </div>
+      </div>
+
+      <div class="form-group"><label>長期枠練習</label>
+        <div style="display:flex;gap:8px;margin-top:4px;">
+          <button id="j-lt-done" class="lt-btn" onclick="setLongTermSlot('done')">✅ 実施できた</button>
+          <button id="j-lt-skip" class="lt-btn" onclick="setLongTermSlot('skip')">❌ 実施できなかった</button>
         </div>
       </div>
 
@@ -2483,7 +2498,7 @@ function openJournalWithDate(dateStr){
   }
 }
 function openJournalModal(editId){
-  jApparatus=new Set(); journalCondition=0; journalMental=0; journalAchievement=0;
+  jApparatus=new Set(); journalCondition=0; journalMental=0; journalAchievement=0; journalLongTermSlot=null;
   jApparatusNoteData={};
   _jRtResults={};
   const today=localDate();
@@ -2514,6 +2529,7 @@ function openJournalModal(editId){
       journalCondition=j.condition||0;
       journalMental=j.mental||0;
       journalAchievement=j.achievement||0;
+      journalLongTermSlot=j.longTermSlot||null;
       document.getElementById('j-theme').innerHTML=j.theme||'';
       document.getElementById('j-overall-review').innerHTML=j.overallReview||j.goodPoints||'';
       document.getElementById('j-notes').innerHTML=j.notes||'';
@@ -2532,7 +2548,7 @@ function openJournalModal(editId){
   }
 
   document.getElementById('j-apparatus-chips').innerHTML=APPARATUS_M.map(a=>`<div class="app-chip${jApparatus.has(a)?' selected':''}" onclick="toggleJApp('${a}')" id="japp-${a}">${COP[a].name}</div>`).join('');
-  updateCondDots(); updateMentalDots(); updateAchievementDots();
+  updateCondDots(); updateMentalDots(); updateAchievementDots(); updateLtBtns();
   renderSkillCheckboxes();
   onJDateChange();
   // タブ初期化（setJMode が両パネルの表示切り替えと apparatus render を行う）
@@ -2599,7 +2615,7 @@ function scheduleAutoSave(){
       overallReview:g('j-overall-review'),
       notes:g('j-notes'),constraints:g('j-constraints'),
       duration:+document.getElementById('j-duration')?.value||0,
-      condition:journalCondition,mental:journalMental,achievement:journalAchievement,
+      condition:journalCondition,mental:journalMental,achievement:journalAchievement,longTermSlot:journalLongTermSlot,
       apparatusNotes,
     };
     if(editId){DB.journal=DB.journal.map(j=>j.id===editId?entry:j);}
@@ -2612,6 +2628,18 @@ function scheduleAutoSave(){
 
 // 種目別ノートの一時保存用
 let jApparatusNoteData={};
+let journalLongTermSlot=null;
+function setLongTermSlot(v){
+  journalLongTermSlot=journalLongTermSlot===v?null:v;
+  updateLtBtns();
+  scheduleAutoSave();
+}
+function updateLtBtns(){
+  const d=document.getElementById('j-lt-done');
+  const s=document.getElementById('j-lt-skip');
+  if(d){d.classList.toggle('active-done',journalLongTermSlot==='done');d.classList.toggle('active-skip',false);}
+  if(s){s.classList.toggle('active-skip',journalLongTermSlot==='skip');s.classList.toggle('active-done',false);}
+}
 function escAttr(s){return String(s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;');}
 
 // ── タブ切り替え ──
@@ -2803,7 +2831,7 @@ function saveJournalEntry(){
     id:editId||Date.now().toString(), date,
     duration:+document.getElementById('j-duration').value||0,
     apparatus:[...jApparatus], condition:journalCondition, mental:journalMental,
-    achievement:journalAchievement,
+    achievement:journalAchievement, longTermSlot:journalLongTermSlot,
     theme:g('j-theme'),
     overallReview:g('j-overall-review'),
     apparatusNotes,
@@ -5214,6 +5242,30 @@ function renderAnalysis(){
   rc('chart-mental','line',l14.map(j=>j.date.slice(5)),[{label:'メンタル',data:l14.map(j=>j.mental||0),borderColor:'#818cf8',backgroundColor:'rgba(129,140,248,.1)',fill:true,tension:.3}]);
   const sh=DB.skills.filter(s=>s.history&&s.history.length>1).sort((a,b)=>b.history.length-a.history.length).slice(0,3);
   if(sh.length){const allDates=[...new Set(sh.flatMap(s=>s.history.map(h=>h.date)))].sort();rc('chart-skill-trend','line',allDates,sh.map((s,i)=>({label:s.name,data:allDates.map(d=>{const h=s.history.filter(x=>x.date<=d);return h.length?h[h.length-1].mastery:null;}),borderColor:['#6366f1','#22c55e','#f59e0b'][i],fill:false,tension:.3,spanGaps:true})));}
+  // 長期枠練習 週別実施率
+  const ltWeeks=[];
+  for(let w=7;w>=0;w--){
+    const ws=new Date(now);ws.setDate(now.getDate()-w*7-6);
+    const we=new Date(now);we.setDate(now.getDate()-w*7);
+    const wss=localDate(ws),wes=localDate(we);
+    const entries=DB.journal.filter(j=>j.date>=wss&&j.date<=wes&&j.longTermSlot);
+    const done=entries.filter(j=>j.longTermSlot==='done').length;
+    const total=entries.length;
+    ltWeeks.push({label:`-${w}w`,done,total,rate:total?Math.round(done/total*100):null});
+  }
+  const ltLabels=ltWeeks.map(w=>w.label);
+  rc('chart-lt-slot','bar',ltLabels,[
+    {label:'実施できた',data:ltWeeks.map(w=>w.done),backgroundColor:'rgba(34,197,94,.7)',borderColor:'#22c55e',borderWidth:1},
+    {label:'実施できなかった',data:ltWeeks.map(w=>w.total-w.done),backgroundColor:'rgba(239,68,68,.5)',borderColor:'#ef4444',borderWidth:1}
+  ]);
+  // 過去30日サマリー
+  const ltR30=recent.filter(j=>j.longTermSlot);
+  const ltDone30=ltR30.filter(j=>j.longTermSlot==='done').length;
+  const ltSummaryEl=document.getElementById('lt-summary');
+  if(ltSummaryEl){
+    if(ltR30.length===0){ltSummaryEl.textContent='過去30日に記録なし';}
+    else{ltSummaryEl.innerHTML=`過去30日：<b>${ltDone30}/${ltR30.length}回</b> 実施（${Math.round(ltDone30/ltR30.length*100)}%）`;}
+  }
 }
 function rc(id,type,labels,datasets){
   const canvas=document.getElementById(id);if(!canvas)return;
