@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260725_071413';
+const _APP_VER='20260806_075512';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -2874,8 +2874,7 @@ function renderJournalList(){
   const sorted=[...DB.journal].sort((a,b)=>b.date.localeCompare(a.date));
   if(!sorted.length){document.getElementById('journal-list').innerHTML='<div class="empty"><div class="icon">📓</div><p>まだ記録がありません</p></div>';return;}
   document.getElementById('journal-list').innerHTML=sorted.map(j=>{
-    const d=new Date(j.date+'T00:00:00');
-    const menuType=getDayMenu()[d.getDay()]||'';
+    const menuType=getDayMenuForDate(j.date)||'';
     const icon=DAY_MENU_ICON[menuType]||'';
     const stars=j.achievement?'★'.repeat(j.achievement)+'☆'.repeat(5-j.achievement):'';
     const condColor=j.condition<=2?'var(--red)':j.condition===3?'var(--yellow)':'var(--green)';
