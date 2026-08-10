@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260810_105752';
+const _APP_VER='20260810_112302';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -905,12 +905,12 @@ canvas{max-height:240px}
 
     <!-- 書式ツールバー -->
     <div class="j-fmt-bar">
-      <button type="button" class="j-fmt-btn" style="font-weight:900;" onmousedown="event.preventDefault()" onclick="applyJFmt('bold')">B</button>
-      <button type="button" class="j-fmt-btn" style="color:#ef4444;font-weight:700;" onmousedown="event.preventDefault()" onclick="applyJFmt('color','#ef4444')">A</button>
-      <button type="button" class="j-fmt-btn" style="color:#3b82f6;font-weight:700;" onmousedown="event.preventDefault()" onclick="applyJFmt('color','#3b82f6')">A</button>
-      <button type="button" class="j-fmt-btn" style="color:#22c55e;font-weight:700;" onmousedown="event.preventDefault()" onclick="applyJFmt('color','#22c55e')">A</button>
-      <button type="button" class="j-fmt-btn" style="color:#f59e0b;font-weight:700;" onmousedown="event.preventDefault()" onclick="applyJFmt('color','#f59e0b')">A</button>
-      <button type="button" class="j-fmt-btn" style="font-size:11px;" onmousedown="event.preventDefault()" onclick="applyJFmt('removeFormat')">✕書式</button>
+      <button type="button" class="j-fmt-btn" style="font-weight:900;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('bold')">B</button>
+      <button type="button" class="j-fmt-btn" style="color:#ef4444;font-weight:700;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('color','#ef4444')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#3b82f6;font-weight:700;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('color','#3b82f6')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#22c55e;font-weight:700;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('color','#22c55e')">A</button>
+      <button type="button" class="j-fmt-btn" style="color:#f59e0b;font-weight:700;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('color','#f59e0b')">A</button>
+      <button type="button" class="j-fmt-btn" style="font-size:11px;" onpointerdown="saveSelAndPrevent(event)" onclick="applyJFmt('removeFormat')">✕書式</button>
       <span style="margin-left:auto;font-size:11px;color:var(--text3);" id="j-autosave-label"></span>
     </div>
     <!-- 共通: 日付・種目 -->
@@ -1351,13 +1351,13 @@ canvas{max-height:240px}
 
 <!-- 書式コンテキストメニュー -->
 <div id="j-ctx-menu" style="display:none;position:fixed;z-index:9999;background:var(--surface);border:1px solid var(--border2);border-radius:var(--radius-sm);box-shadow:var(--shadow-lg);padding:4px;min-width:130px;">
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('bold')"><b>B</b> 太字</button>
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#ef4444')"><span style="color:#ef4444;font-weight:700;">A</span> 赤</button>
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#3b82f6')"><span style="color:#3b82f6;font-weight:700;">A</span> 青</button>
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#22c55e')"><span style="color:#22c55e;font-weight:700;">A</span> 緑</button>
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('color','#f59e0b')"><span style="color:#f59e0b;font-weight:700;">A</span> 黄</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('bold')"><b>B</b> 太字</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('color','#ef4444')"><span style="color:#ef4444;font-weight:700;">A</span> 赤</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('color','#3b82f6')"><span style="color:#3b82f6;font-weight:700;">A</span> 青</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('color','#22c55e')"><span style="color:#22c55e;font-weight:700;">A</span> 緑</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('color','#f59e0b')"><span style="color:#f59e0b;font-weight:700;">A</span> 黄</button>
   <div style="border-top:1px solid var(--border);margin:3px 0;"></div>
-  <button class="j-ctx-item" onmousedown="event.preventDefault();jCtxFmt('removeFormat')">✕ 書式を消す</button>
+  <button class="j-ctx-item" onpointerdown="saveSelAndPrevent(event)" onclick="jCtxFmt('removeFormat')">✕ 書式を消す</button>
 </div>
 <!-- Combo Modal -->
 <div class="modal-overlay" id="modal-combo">
@@ -2566,24 +2566,62 @@ function autoGrowAll(root){(root||document).querySelectorAll('textarea').forEach
 
 // ── 書式：選択範囲の保存と適用 ──
 let _jFmtSel=null;
+let _jFmtField=null;
+
+// ポインターダウン時に選択を保存してフォーカス移動を防ぐ
+function saveSelAndPrevent(e){
+  e.preventDefault();
+  const sel=window.getSelection();
+  if(sel&&sel.rangeCount){
+    const node=sel.anchorNode;
+    if(node){
+      const el=node.nodeType===3?node.parentElement:node;
+      const rf=el&&el.closest?el.closest('.rich-field'):null;
+      if(rf){
+        try{_jFmtSel=sel.getRangeAt(0).cloneRange();_jFmtField=rf;}catch(e2){}
+      }
+    }
+  }
+}
+
+// selectionchange でも継続的に追跡
 document.addEventListener('selectionchange',()=>{
   const sel=window.getSelection();
   if(!sel||!sel.rangeCount)return;
   const node=sel.anchorNode;
   if(!node)return;
   const el=node.nodeType===3?node.parentElement:node;
-  if(el&&el.closest&&el.closest('.rich-field')){
-    try{_jFmtSel=sel.getRangeAt(0).cloneRange();}catch(e){}
-  }
+  const rf=el&&el.closest?el.closest('.rich-field'):null;
+  if(rf){try{_jFmtSel=sel.getRangeAt(0).cloneRange();_jFmtField=rf;}catch(e){}}
 });
+
 function applyJFmt(cmd,val){
-  const sel=window.getSelection();
-  if(_jFmtSel){
-    try{sel.removeAllRanges();sel.addRange(_jFmtSel);}catch(e){}
+  // フィールドをフォーカスして選択を復元
+  const field=_jFmtField||(document.activeElement?.classList.contains('rich-field')?document.activeElement:null);
+  if(field){
+    field.focus({preventScroll:true});
+    if(_jFmtSel){
+      try{
+        const sel=window.getSelection();
+        sel.removeAllRanges();
+        sel.addRange(_jFmtSel);
+      }catch(e){}
+    }
   }
   if(cmd==='color')document.execCommand('foreColor',false,val);
   else document.execCommand(cmd,false,null);
+  // autosave トリガー
+  if(field)field.dispatchEvent(new Event('input',{bubbles:true}));
 }
+
+// キーボードショートカット（Ctrl/Cmd+B）
+document.addEventListener('keydown',e=>{
+  if(!e.target.classList?.contains('rich-field'))return;
+  if((e.ctrlKey||e.metaKey)&&(e.key==='b'||e.key==='B')){
+    e.preventDefault();
+    document.execCommand('bold',false,null);
+  }
+});
 
 // ── 書式コンテキストメニュー ──
 (function(){
