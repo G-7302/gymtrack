@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260810_112302';
+const _APP_VER='20260814_081409';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -3301,8 +3301,10 @@ function renderRtPage(){
         const cls=rtResClass(v);
         return `<td><span class="rt-res ${cls}">${rtResDisplay(v)}</span></td>`;
       }).join('');
+      const dow=new Date(r.date+'T00:00:00').getDay();
+      const dayLabel=`${r.date}（${DAY_NAMES_JA[dow]}）`;
       return `<tr onclick="openRtModal('${r.id}')" style="cursor:pointer;" onmouseover="this.style.background='var(--surface2)'" onmouseout="this.style.background=''">
-        <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${r.date}</td>
+        <td style="text-align:left;font-weight:600;white-space:nowrap;padding-left:8px;">${dayLabel}</td>
         ${cells}
         <td><span class="rt-score-pill" style="background:${scoreColor}22;color:${scoreColor};">○${score}/6</span></td>
         <td style="font-size:11px;color:var(--text2);text-align:left;max-width:120px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">${r.memo||''}</td>
