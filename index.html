@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260814_081409';
+const _APP_VER='20260819_075459';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -3274,7 +3274,7 @@ function renderRtPage(){
     wrap.innerHTML='<div class="empty"><div class="icon">🔄</div><p>通し記録がまだありません</p><button class="btn btn-ghost" onclick="openRtModal()" style="margin-top:8px;">最初の記録を追加</button></div>';
     return;
   }
-  // 大会別にグルーピング
+  // 大会別にグルーピング（古い順でグループ化 → 後で逆順にする）
   const sorted_comps=[...DB.competitions].sort((a,b)=>a.date.localeCompare(b.date));
   const groups=[];
   sorted_comps.forEach((c,i)=>{
@@ -3286,7 +3286,9 @@ function renderRtPage(){
     });
     if(rts.length)groups.push({comp:c,rts:rts.sort((a,b)=>b.date.localeCompare(a.date))});
   });
-  // 大会に属さない記録（大会がない・最後の大会より後）
+  // 終わった期間を新しい順（直近の大会が先頭）に並べ替え
+  groups.reverse();
+  // 現在進行中の期間（最後の大会より後）を最上部に追加
   const lastComp=sorted_comps.length?sorted_comps[sorted_comps.length-1]:null;
   const ungrouped=list.filter(r=>!lastComp||r.date>lastComp.date);
   if(ungrouped.length)groups.unshift({comp:null,rts:ungrouped});
