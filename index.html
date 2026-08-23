@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260819_075459';
+const _APP_VER='20260824_084151';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -2984,6 +2984,9 @@ function openWeekPlanModal(weekStart, prefillNote){
   const ws=weekStart||getWeekStart(localDate());
   const wp=(DB.weekPlans||[]).find(w=>w.weekStart===ws)||{};
   document.getElementById('wp-week-start').value=ws;
+  // モーダルタイトルに振り返り期間を表示
+  const titleEl=document.querySelector('#modal-weekplan .modal-title span');
+  if(titleEl)titleEl.textContent=`📓 週間内省（${wpRangeLabel(ws)}）`;
 
   // フェーズ自動判定（直近大会から）
   const nextComp=getNextComp();
@@ -3028,6 +3031,14 @@ function getPrevWeekStart(wsStr){
   const d=new Date(wsStr+'T00:00:00');
   d.setDate(d.getDate()-7);
   return localDate(d);
+}
+// 週間内省の表示用日付範囲ラベル（weekStartの前の6日間：先週の振り返り期間）
+function wpRangeLabel(ws){
+  const start=new Date(ws+'T00:00:00');
+  const end=new Date(ws+'T00:00:00');
+  start.setDate(start.getDate()-6);
+  end.setDate(end.getDate()-1);
+  return `${localDate(start)}～${localDate(end)}`;
 }
 
 function wpSetRest(day){
@@ -3077,7 +3088,7 @@ function renderWeekPlanView(){
     return `<div class="week-plan-card" style="${isCurrent?'border-color:var(--accent);':'' }">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:10px;">
         <span class="week-plan-phase">${PHASE_LABELS[wp.phase]||wp.phase}</span>
-        <span style="font-size:12px;color:var(--text2);">${wp.weekStart}〜</span>
+        <span style="font-size:12px;color:var(--text2);">${wpRangeLabel(wp.weekStart)}</span>
         ${isCurrent?'<span style="font-size:11px;color:var(--green);font-weight:700;">● 今週</span>':''}
         <div style="margin-left:auto;display:flex;gap:4px;">
           <button class="btn btn-ghost btn-sm" onclick="openWeekPlanModal('${wp.weekStart}')">✏️</button>
