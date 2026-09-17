@@ -7,7 +7,7 @@
 <meta http-equiv="Pragma" content="no-cache">
 <script>
 // ── キャッシュバスター（デプロイ時に自動更新） ──
-const _APP_VER='20260824_084151';
+const _APP_VER='20260918_074341';
 const _stored=localStorage.getItem('_gymtrack_ver');
 if(_stored!==_APP_VER&&!location.search.includes('_v=')){
   localStorage.setItem('_gymtrack_ver',_APP_VER);
@@ -1691,7 +1691,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const fbDB = firebase.database();
-const FB_REF = fbDB.ref('gymdata');
+let FB_REF = null; // UID確定後に gymdata/{uid} にセットされる
 let _fbSaveTimer = null;
 let _fbListening = false;
 
@@ -1724,6 +1724,7 @@ function saveDB(){
   setSyncStatus('saving');
   clearTimeout(_fbSaveTimer);
   _fbSaveTimer = setTimeout(()=>{
+    if(!FB_REF){setSyncStatus('offline');return;}
     FB_REF.set(JSON.parse(JSON.stringify(DB)))
       .then(()=>setSyncStatus('synced'))
       .catch(()=>setSyncStatus('offline'));
@@ -1739,41 +1740,25 @@ function startFirebaseSync(){
     if(!user || _fbListening) return;
     _fbListening = true;
     // トークンを明示的に取得してからDB接続（タイミング問題対策）
-    user.getIdToken(true).then(()=>_startFBSync()).catch(()=>setSyncStatus('offline'));
+    user.getIdToken(true).then(()=>_startFBSync(user.uid)).catch(()=>setSyncStatus('offline'));
   });
 }
-function _startFBSync(){
+function _startFBSync(uid){
+  // UID別のパスにスコープ（他ユーザーのデータを読み書きできないようにする）
+  FB_REF = fbDB.ref('gymdata/' + uid);
   // 接続状態の監視
   fbDB.ref('.info/connected').on('value', snap=>{
     setSyncStatus(snap.val() ? 'synced' : 'offline');
   });
-  // クラウドのデータを読み込んでリアルタイム同期
-  FB_REF.once('value').then(snap=>{
-    const data = snap.val();
-    if(data && typeof data === 'object'){
-      // クラウドとローカルをマージ（クラウド優先）
-      DB = {...DB, ...data};
-      localStorage.setItem('gymtrack_v2', JSON.stringify(DB));
-      // 現在のページを再描画
-      const page = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
-      goto(page);
-      setSyncStatus('synced');
-    } else {
-      // クラウドが空→ローカルデータをアップロード
-      FB_REF.set(JSON.parse(JSON.stringify(DB)))
-        .then(()=>setSyncStatus('synced'))
-        .catch(()=>setSyncStatus('offline'));
-    }
-    // 以降はリアルタイムで他端末の変更を受信
+  // リアルタイムリスナー登録（共通処理）
+  function _attachRTListener(){
     FB_REF.on('value', snap=>{
       const d = snap.val();
       if(!d) return;
-      // ローカル保存直後（2秒以内）はFirebase側の古いデータで上書きしない
       if(Date.now()-_lastLocalSave<2000) return;
       DB = {...DB, ...d};
       localStorage.setItem('gymtrack_v2', JSON.stringify(DB));
       setSyncStatus('synced');
-      // 現在のページのみ再描画
       const cur = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
       if(cur==='dashboard') renderDashboard();
       else if(cur==='journal'){renderJournalList();renderJournalCalendar();}
@@ -1781,6 +1766,38 @@ function _startFBSync(){
       else if(cur==='results') renderResultsPage();
       else if(cur==='routine') renderRoutinePage();
     });
+  }
+  // クラウドのデータを読み込んでリアルタイム同期
+  FB_REF.once('value').then(snap=>{
+    const data = snap.val();
+    if(data && typeof data === 'object'){
+      // 新パス(gymdata/{uid})にデータあり → そのまま使う
+      DB = {...DB, ...data};
+      localStorage.setItem('gymtrack_v2', JSON.stringify(DB));
+      const page = localStorage.getItem('gymtrack_lastpage') || 'dashboard';
+      goto(page);
+      setSyncStatus('synced');
+      _attachRTListener();
+    } else {
+      // 新パスが空 → 旧パス(gymdata)からの移行を試みる
+      fbDB.ref('gymdata').once('value').then(oldSnap=>{
+        const oldData = oldSnap.val();
+        // 旧パスに自分のデータっぽいものがある場合は移行
+        const srcData = (oldData && typeof oldData === 'object' && !oldData[uid]) ? oldData : null;
+        const upload = srcData || JSON.parse(JSON.stringify(DB));
+        if(srcData){
+          console.log('[GymTrack] 旧パス(gymdata)から新パスへ移行中...');
+        }
+        FB_REF.set(upload)
+          .then(()=>{ setSyncStatus('synced'); _attachRTListener(); })
+          .catch(()=>setSyncStatus('offline'));
+      }).catch(()=>{
+        // 旧パス読み取り不可（ルール変更済み）→ ローカルデータをアップロード
+        FB_REF.set(JSON.parse(JSON.stringify(DB)))
+          .then(()=>{ setSyncStatus('synced'); _attachRTListener(); })
+          .catch(()=>setSyncStatus('offline'));
+      });
+    }
   }).catch(()=>setSyncStatus('offline'));
 }
 
